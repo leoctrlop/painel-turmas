@@ -493,39 +493,48 @@
 
   const app  = initializeApp(firebaseConfig);
   const db   = getDatabase(app);
-  window.salvarStatusTurma = function () {
-  if (!turmaSelecionada) {
-    alert("Nenhuma turma selecionada.");
-    return;
-  }
+  window.salvarAlunosTurma = function () {
+    if (!turmaSelecionada) {
+      alert("Nenhuma turma selecionada.");
+      return;
+    }
 
-  const select = document.getElementById("statusTurmaSelect");
-  if (!select) return;
+    const input = document.getElementById("alunosTurmaInput");
+    if (!input) return;
 
-  const novoStatus = select.value;
-  const turmaId = turmaSelecionada.id;
+    const turmaId = turmaSelecionada.id;
+    const v = input.value.trim();
 
-  const statusRef = ref(db, `turmas/${turmaId}/status`);
-
-  set(statusRef, novoStatus)
-    .then(() => {
-      // atualiza em memória
-      turmaSelecionada.status = novoStatus;
-      const idx = turmas.findIndex(t => t.id === turmaId);
-      if (idx >= 0) {
-        turmas[idx].status = novoStatus;
+    // permite vazio -> null
+    let alunos = null;
+    if (v !== "") {
+      alunos = parseInt(v, 10);
+      if (isNaN(alunos) || alunos < 0) {
+        alert("Digite um número válido (0 ou maior), ou deixe vazio para limpar.");
+        return;
       }
+    }
 
-      // redesenha lista para atualizar badge de cor
-      renderListaTurmas();
+    const alunosRef = ref(db, `turmas/${turmaId}/alunos`);
 
-      alert("Status da turma atualizado com sucesso!");
-    })
-    .catch((err) => {
-      console.error("Erro ao atualizar status da turma:", err);
-      alert("Erro ao atualizar status. Veja o console para detalhes.");
-    });
-    };
+    set(alunosRef, alunos)
+      .then(() => {
+        // atualiza em memória
+        turmaSelecionada.alunos = alunos;
+        const idx = turmas.findIndex(t => t.id === turmaId);
+        if (idx >= 0) turmas[idx].alunos = alunos;
+
+        renderListaTurmas(); // atualiza a lista (Alunos: ...)
+        if (modoPainel === "schedule") renderQuadroHorarios(); // se você estiver usando o quadro
+
+        alert("Número de alunos atualizado!");
+      })
+      .catch((err) => {
+        console.error("Erro ao atualizar alunos:", err);
+        alert("Erro ao salvar. Veja o console.");
+      });
+  };
+
 
   const processosDef = [
     { id: "grupo_whats",    titulo: "Grupos / Manual",       campoData: "grupoWhats" },
@@ -624,21 +633,23 @@
     return calcularStatusAutomatico(turma, procId);
   }
 
-  window.alterarFiltros = function() {
-    filtroNivel   = document.getElementById("filtroNivel").value;
-    filtroDia     = document.getElementById("filtroDia").value;
-    filtroHorario = document.getElementById("filtroHorario").value;
-    filtroStatus  = document.getElementById("filtroStatus").value;
+ window.alterarFiltros = function() {
+  filtroNivel   = document.getElementById("filtroNivel").value;
+  filtroDia     = document.getElementById("filtroDia").value;
+  filtroHorario = document.getElementById("filtroHorario").value;
+  filtroStatus  = document.getElementById("filtroStatus").value;
 
-    turmaSelecionada = null;
-    if (modoPainel === "turma") {
-      document.getElementById("tituloTurma").textContent =
-        "Selecione uma turma à esquerda";
-      document.getElementById("botoesAcoes").style.display = "none";
-      document.getElementById("conteudoTurma").innerHTML = "";
-    }
-    renderListaTurmas();
-  };
+  turmaSelecionada = null;
+
+  if (modoPainel === "turma") {
+    document.getElementById("tituloTurma").textContent =
+      "Selecione uma turma à esquerda";
+    document.getElementById("botoesAcoes").style.display = "none";
+    document.getElementById("conteudoTurma").innerHTML = "";
+  }
+
+  renderListaTurmas();
+};
 
   function preencherOpcoesHorario() {
     const selectHorario = document.getElementById("filtroHorario");
@@ -698,23 +709,26 @@
     }
   }
 
-  function selecionarTurma(id) {
-    turmaSelecionada = turmas.find(t => t.id === id);
-    document.querySelectorAll(".turma-card").forEach(card => {
-      card.classList.toggle("selecionada", card.dataset.id === id);
-    });
+ function selecionarTurma(id) {
+  turmaSelecionada = turmas.find(t => t.id === id);
 
-    if (modoPainel === "turma") {
-      const titulo   = document.getElementById("tituloTurma");
-      const botoes   = document.getElementById("botoesAcoes");
-      const conteudo = document.getElementById("conteudoTurma");
+  document.querySelectorAll(".turma-card").forEach(card => {
+    card.classList.toggle("selecionada", card.dataset.id === id);
+  });
 
-      titulo.textContent = `Turma selecionada: ${turmaSelecionada.nome}`;
-      botoes.style.display = "flex";
-      conteudo.innerHTML =
-        `<p>Escolha uma opção acima: <strong>Acompanhar turma</strong> ou <strong>Processos da turma</strong>.</p>`;
-    }
+  if (modoPainel === "turma") {
+    const titulo   = document.getElementById("tituloTurma");
+    const botoes   = document.getElementById("botoesAcoes");
+
+    titulo.textContent = `Turma selecionada: ${turmaSelecionada.nome}`;
+    botoes.style.display = "flex";
+
+    // ✅ abre automaticamente
+    mostrarSecao("acompanhar");
   }
+}
+window.selecionarTurma = selecionarTurma;
+
   window.selecionarTurma = selecionarTurma;
 
   window.setModoPainel = function(modo) {
@@ -782,7 +796,26 @@
 
       <div class="linha-info"><span class="campo-label">Nível</span><span class="campo-valor">${turmaSelecionada.nivel}</span></div>
       <div class="linha-info"><span class="campo-label">Dia / horário</span><span class="campo-valor">${turmaSelecionada.dia} • ${turmaSelecionada.horario}</span></div>
-      <div class="linha-info"><span class="campo-label">Alunos</span><span class="campo-valor">${turmaSelecionada.alunos || "-"}</span></div>
+      <div class="linha-info">
+        <span class="campo-label">Alunos</span>
+        <span class="campo-valor">
+          <input
+            id="alunosTurmaInput"
+            type="number"
+            min="0"
+            value="${turmaSelecionada.alunos ?? ""}"
+            style="width:90px; padding:2px 6px; font-size:0.85rem; border:1px solid #d1d5db; border-radius:6px;"
+          />
+          <button
+            type="button"
+            class="btn btn-primario"
+            style="margin-left:6px; padding:4px 10px; font-size:0.8rem;"
+            onclick="salvarAlunosTurma()"
+          >
+            Salvar
+          </button>
+        </span>
+      </div>
       <div class="linha-info"><span class="campo-label">Data de início</span><span class="campo-valor">${turmaSelecionada.dataInicio || "-"}</span></div>
       <div class="linha-info"><span class="campo-label">Pausa</span><span class="campo-valor">${turmaSelecionada.dataPausa || "-"}</span></div>
       <div class="linha-info"><span class="campo-label">Período de férias</span><span class="campo-valor">${turmaSelecionada.periodoFerias || "-"}</span></div>
