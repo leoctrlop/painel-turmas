@@ -127,6 +127,114 @@
       text-align: center;
       min-width: 90px;
     }
+    /* ===== QUADRO DE HORÁRIOS ===== */
+    .schedule-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 6px 0 10px 0;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #f9fafb;
+    }
+
+    .schedule-controls .left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .chk {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #111827;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chk input { transform: translateY(1px); }
+
+    .schedule-wrap {
+      overflow: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+
+    .schedule-table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 820px;
+      font-size: 0.82rem;
+      background: #fff;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    .schedule-table thead th {
+      background: #f3f4f6;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      font-weight: 700;
+    }
+
+    .schedule-table .col-hora {
+      background: #f9fafb;
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      font-weight: 700;
+      white-space: nowrap;
+      width: 92px;
+    }
+
+    .slot-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 46px;
+    }
+
+    .slot-card {
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: 0.12s ease;
+    }
+
+    .slot-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .slot-title {
+      font-weight: 700;
+      line-height: 1.15;
+      margin-top: 4px;
+    }
+
+    .slot-sub {
+      font-size: 0.78rem;
+      color: #4b5563;
+      margin-top: 2px;
+    }
+
+    .slot-andamento { border-left: 6px solid #16a34a; }
+    .slot-formacao  { border-left: 6px solid #eab308; }
+
 
     @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
   </style>
@@ -185,6 +293,9 @@
         <button id="tabOverview" class="tab-btn" onclick="setModoPainel('overview')">
           Visão geral dos processos
         </button>
+        <button id="tabSchedule" class="tab-btn" onclick="setModoPainel('schedule')">
+          Quadro de horários
+        </button>
       </div>
 
       <div class="painel-titulo" id="tituloTurma">
@@ -217,6 +328,23 @@
   let filtroDia = "todos";
   let filtroHorario = "todos";
   let filtroStatus = "todas";
+  let mostrarFormacaoNoHorario = true;
+
+  function extrairMinutosHorario(horarioStr) {
+    const m = String(horarioStr || "").match(/(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    const hh = parseInt(m[1], 10);
+    const mm = parseInt(m[2], 10);
+    if (isNaN(hh) || isNaN(mm)) return null;
+    return hh * 60 + mm;
+  }
+
+  function formatarHora(min) {
+    const hh = String(Math.floor(min / 60)).padStart(2, "0");
+    const mm = String(min % 60).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
   const cicloStatusProcesso = ["neutro", "embreve", "atrasado", "feito"];
   const statusLabelMap = {
     neutro: "Neutro",
@@ -428,6 +556,9 @@
     if (modoPainel === "overview") {
       renderVisaoGeral();
     }
+    if (modoPainel === "schedule") {
+      renderQuadroHorarios();
+    }
   });
 
   onValue(processosRootRef, (snap) => {
@@ -588,10 +719,14 @@
 
   window.setModoPainel = function(modo) {
     modoPainel = modo;
-    const tabTurma    = document.getElementById("tabTurma");
-    const tabOverview = document.getElementById("tabOverview");
+    const tabTurma     = document.getElementById("tabTurma");
+    const tabOverview  = document.getElementById("tabOverview");
+    const tabSchedule  = document.getElementById("tabSchedule");
+
     tabTurma.classList.toggle("tab-ativa", modo === "turma");
     tabOverview.classList.toggle("tab-ativa", modo === "overview");
+    tabSchedule.classList.toggle("tab-ativa", modo === "schedule");
+
 
     const titulo   = document.getElementById("tituloTurma");
     const botoes   = document.getElementById("botoesAcoes");
@@ -601,7 +736,11 @@
       botoes.style.display = "none";
       titulo.textContent = "Visão geral dos processos";
       renderVisaoGeral();
-    } else {
+    } else if (modo === "schedule") {
+        botoes.style.display = "none";
+        titulo.textContent = "Quadro de horários";
+        renderQuadroHorarios();
+      } else {
       if (turmaSelecionada) {
         titulo.textContent = `Turma selecionada: ${turmaSelecionada.nome}`;
         botoes.style.display = "flex";
@@ -792,6 +931,108 @@
     html += `</tbody></table></div>`;
     conteudo.innerHTML = html;
   }
+  function renderQuadroHorarios() {
+  const conteudo = document.getElementById("conteudoTurma");
+
+  const diasOrdem = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+  // só “Em andamento” e (opcionalmente) “Em formação”
+  const turmasAtivas = turmas.filter(t => {
+    if (t.status === "Em andamento") return true;
+    if (mostrarFormacaoNoHorario && t.status === "Em formação") return true;
+    return false;
+  });
+
+  // horários únicos (minutos)
+  const minutosUnicos = Array.from(new Set(
+    turmasAtivas
+      .map(t => extrairMinutosHorario(t.horario))
+      .filter(v => v !== null)
+  )).sort((a, b) => a - b);
+
+  const legenda = `
+    <span class="badge badge-status-andamento">Em andamento</span>
+    <span class="badge badge-status-formacao">Em formação</span>
+  `;
+
+  let html = `
+    <h3>🗓️ Quadro de horários</h3>
+
+    <div class="schedule-controls">
+      <div class="left">
+        <label class="chk">
+          <input type="checkbox" ${mostrarFormacaoNoHorario ? "checked" : ""} onchange="toggleFormacaoHorario(this.checked)">
+          Mostrar turmas <strong>Em formação</strong>
+        </label>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        ${legenda}
+        <span style="font-size:0.78rem; color:#6b7280;">
+          (clique numa turma para abrir no painel)
+        </span>
+      </div>
+    </div>
+  `;
+
+  if (minutosUnicos.length === 0) {
+    html += `<div style="color:#6b7280; font-size:0.9rem;">Nenhuma turma “Em andamento” (ou “Em formação”, se marcado) com horário válido.</div>`;
+    conteudo.innerHTML = html;
+    return;
+  }
+
+  html += `<div class="schedule-wrap"><table class="schedule-table"><thead><tr>
+    <th class="col-hora">Horário</th>`;
+
+  diasOrdem.forEach(d => { html += `<th>${d}</th>`; });
+
+  html += `</tr></thead><tbody>`;
+
+  minutosUnicos.forEach(min => {
+    const horaLabel = formatarHora(min);
+    html += `<tr><td class="col-hora">${horaLabel}</td>`;
+
+    diasOrdem.forEach(dia => {
+      const lista = turmasAtivas.filter(t => {
+        if (t.dia !== dia) return false;
+        const tm = extrairMinutosHorario(t.horario);
+        return tm === min;
+      });
+
+      if (lista.length === 0) {
+        html += `<td><div class="slot-cell" style="color:#9ca3af;">—</div></td>`;
+      } else {
+        html += `<td><div class="slot-cell">`;
+        lista.forEach(t => {
+          const classeStatus = (t.status === "Em andamento") ? "slot-andamento" : "slot-formacao";
+          html += `
+            <div class="slot-card ${classeStatus}" onclick="abrirTurmaDoHorario('${t.id}')">
+              <div>${criarBadgeStatus(t.status)} ${criarBadgeNivel(t.nivel)}</div>
+              <div class="slot-title">${t.nome}</div>
+              <div class="slot-sub">${t.dia} • ${t.horario} • Alunos: ${t.alunos || "-"}</div>
+            </div>
+          `;
+        });
+        html += `</div></td>`;
+      }
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  conteudo.innerHTML = html;
+}
+
+window.toggleFormacaoHorario = function(checked) {
+  mostrarFormacaoNoHorario = !!checked;
+  if (modoPainel === "schedule") renderQuadroHorarios();
+};
+
+window.abrirTurmaDoHorario = function(id) {
+  // muda pro modo turma e seleciona
+  setModoPainel("turma");
+  selecionarTurma(id);
+};
 
   // inicial
   setModoPainel("turma");
