@@ -329,6 +329,153 @@
   let filtroHorario = "todos";
   let filtroStatus = "todas";
   let mostrarFormacaoNoHorario = true;
+  // ====== Datas (BR/ISO) ======
+function parseDateBRorISO(s) {
+  if (!s) return null;
+  s = String(s).trim();
+
+  // ISO: YYYY-MM-DD
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  // BR: DD/MM/YYYY
+  m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) {
+    const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  return null;
+}
+
+function dateToISO(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function isoToBR(iso) {
+  const d = parseDateBRorISO(iso);
+  if (!d) return "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = d.getFullYear();
+  return `${dd}/${mm}/${yy}`;
+}
+
+function parseWeekdayPT(dia) {
+  const map = {
+    "Segunda": 1,
+    "Terça": 2, "Terca": 2,
+    "Quarta": 3,
+    "Quinta": 4,
+    "Sexta": 5,
+    "Sábado": 6, "Sabado": 6
+  };
+  return map[dia] ?? null; // JS: 0=Dom ... 6=Sáb
+}
+
+function nextWeekdayOnOrAfter(d, targetJsWeekday) {
+  const cur = d.getDay();
+  const delta = (targetJsWeekday - cur + 7) % 7;
+  const nd = new Date(d);
+  nd.setDate(d.getDate() + delta);
+  nd.setHours(0,0,0,0);
+  return nd;
+}
+
+function normalizeExclusions(excludedList = []) {
+  // aceita: "YYYY-MM-DD" ou ["YYYY-MM-DD","YYYY-MM-DD"]
+  const single = new Set();
+  const ranges = [];
+
+  for (const item of excludedList) {
+    if (Array.isArray(item) && item.length === 2) {
+      const d1 = parseDateBRorISO(item[0]);
+      const d2 = parseDateBRorISO(item[1]);
+      if (!d1 || !d2) continue;
+      const a = d1 <= d2 ? d1 : d2;
+      const b = d1 <= d2 ? d2 : d1;
+      ranges.push([dateToISO(a), dateToISO(b)]);
+    } else {
+      const d = parseDateBRorISO(item);
+      if (!d) continue;
+      single.add(dateToISO(d));
+    }
+  }
+  return { single, ranges };
+}
+
+function inAnyRangeISO(iso, ranges) {
+  return ranges.some(([a,b]) => a <= iso && iso <= b);
+}
+
+function genValidClassDaysISO({ startDateStr, diaSemanaPT, count, excludedList = [] }) {
+  const start = parseDateBRorISO(startDateStr);
+  const wd = parseWeekdayPT(diaSemanaPT);
+  if (!start || wd === null) return { datesISO: [], skipped: [] };
+
+  const { single, ranges } = normalizeExclusions(excludedList);
+
+  // começa no primeiro dia correto (no ou após)
+  let cur = nextWeekdayOnOrAfter(start, wd);
+
+  const datesISO = [];
+  const skipped = [];
+
+  while (datesISO.length < count) {
+    const iso = dateToISO(cur);
+
+    let reason = null;
+    if (single.has(iso)) reason = "feriado/data pontual";
+    else if (inAnyRangeISO(iso, ranges)) reason = "período (recesso/férias)";
+
+    if (reason) skipped.push(`Pulou ${iso} (${reason})`);
+    else datesISO.push(iso);
+
+    cur = new Date(cur);
+    cur.setDate(cur.getDate() + 7);
+    cur.setHours(0,0,0,0);
+  }
+
+  return { datesISO, skipped };
+}
+
+function calcularProcessosPorAulas(datesISO) {
+  // 1-based: aula 1 é datesISO[0]
+  const n = datesISO.length;
+  const get = (aulaN) => (aulaN >= 1 && aulaN <= n) ? isoToBR(datesISO[aulaN - 1]) : "";
+
+  return {
+    // Tabela do print
+    grupoWhats:       get(2),                 // 2ª semana
+    alinhamentoPais:  get(4),                 // 4ª semana
+    audioFeedback:    get(9),                 // 9ª semana
+    videosAlunos:     get(14),                // 14ª semana (pode trocar pra 15 se quiser)
+
+    rematricula1:     get(n - 4),             // 4 semanas antes do TCC (se TCC = última aula)
+    mensagemTCC:      get(n - 1),             // 1 semana antes
+    bombomCartao:     get(n),                 // última aula
+    dataTCC:          get(n),                 // TCC na última aula (aqui é a decisão)
+  };
+}
+const EXCLUSOES_PADRAO = [
+  ["2025-12-13", "2026-02-06"],
+  ["2026-07-05", "2026-08-02"],
+  "2025-11-15",
+  "2025-11-20",
+  "2025-12-08",
+  "2026-06-04",
+  "2026-09-07",
+  ["2026-10-12","2026-10-15"],
+];
+
 
   function extrairMinutosHorario(horarioStr) {
     const m = String(horarioStr || "").match(/(\d{1,2}):(\d{2})/);
@@ -462,6 +609,34 @@
       bombomCartao: "",
       dataTCC: ""
     };
+    // ===== AUTO: gerar calendário e preencher processos =====
+  const total = 21; // ou pegue de um input depois
+  if (dataInicio) {
+    const { datesISO, skipped } = genValidClassDaysISO({
+      startDateStr: dataInicio,     // aceita dd/mm/aaaa
+      diaSemanaPT: dia,             // "Quarta", "Sábado"...
+      count: total,
+      excludedList: EXCLUSOES_PADRAO
+    });
+
+    if (datesISO.length === total) {
+      // opcional: guardar calendário de aulas
+      dadosNovaTurma.calendarioAulas = datesISO; // ["YYYY-MM-DD", ...]
+
+      // totalAulas e dataFim automáticos (se quiser)
+      dadosNovaTurma.totalAulas = total;
+      if (!dataFim) {
+        dadosNovaTurma.dataFim = isoToBR(datesISO[datesISO.length - 1]);
+      }
+
+      // preencher as datas dos processos
+      Object.assign(dadosNovaTurma, calcularProcessosPorAulas(datesISO));
+
+      // opcional: log do que foi pulado (pra debug)
+      dadosNovaTurma.logPulos = skipped.slice(0, 50).join(" | ");
+    }
+  }
+
 
     const turmaRef = ref(db, "turmas/" + id);
 
