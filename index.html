@@ -4,243 +4,367 @@
   <meta charset="UTF-8" />
   <title>Painel de Turmas</title>
   <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { margin: 0; padding: 20px; background: #f4f4f8; color: #222; }
-    h1 { text-align: center; margin-bottom: 20px; }
+  /* =========================
+     BASE
+     ========================= */
+  * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 
-    .layout { display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 20px; align-items: flex-start; }
+  /* =========================
+     THEME TOKENS (light/dark)
+     ========================= */
+  :root{
+    --bg: #f4f4f8;
+    --text: #222;
 
-    .lista-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-    .lista-header-title { font-weight: 600; font-size: 0.95rem; }
-    .filtros-row { display: flex; flex-wrap: wrap; gap: 6px; }
-    .filtro-select {
-      padding: 4px 8px; border-radius: 999px; border: 1px solid #d1d5db;
-      font-size: 0.8rem; background: #f9fafb;
-    }
+    --panel: #ffffff;
+    --card: #ffffff;
 
-    .turma-lista {
-      background: #fff; border-radius: 12px; padding: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08); max-height: 80vh; overflow-y: auto;
-    }
-    .turma-card {
-      border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer;
-      border: 1px solid #ddd; display: flex; flex-direction: column; gap: 4px;
-      transition: 0.15s ease;
-    }
-    .turma-card:hover { background: #f0f7ff; transform: translateY(-1px); }
-    .turma-card.selecionada { border-color: #2563eb; background: #e0edff; }
-    .turma-nome { font-weight: 600; font-size: 0.95rem; }
-    .turma-meta { font-size: 0.8rem; color: #555; }
+    --muted: #555;
+    --muted2: #6b7280;
 
-    .badge {
-      display: inline-block; font-size: 0.75rem; padding: 2px 8px;
-      border-radius: 999px; color: #fff; margin-right: 4px;
-    }
-    .badge-status-andamento { background: #16a34a; }
-    .badge-status-formacao { background: #eab308; }
-    .badge-status-encerrada { background: #dc2626; }
+    --border: #e5e7eb;
+    --border2: #ddd;
 
-    .badge-kids { background: #3b82f6; }
-    .badge-teens { background: #f97316; }
-    .badge-young { background: #a855f7; }
+    --shadow: 0 2px 6px rgba(0,0,0,0.08);
 
-    .painel {
-      background: #fff; border-radius: 12px; padding: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      min-height: 200px; display: flex; flex-direction: column; gap: 10px;
-    }
+    --hover: #f0f7ff;
+    --selected: #e0edff;
+    --selected-border: #2563eb;
 
-    /* abas do painel */
-    .painel-tabs { display: flex; gap: 6px; margin-bottom: 4px; }
-    .tab-btn {
-      border: none; border-radius: 999px;
-      background: #e5e7eb; color: #111827;
-      padding: 4px 10px; font-size: 0.8rem;
-      cursor: pointer; transition: 0.15s;
-    }
-    .tab-btn.tab-ativa { background: #2563eb; color: #fff; }
-    .tab-btn:hover { filter: brightness(0.95); }
+    --input-bg: #f9fafb;
+    --input-border: #d1d5db;
 
-    .painel-titulo { font-size: 1.05rem; font-weight: 600; }
+    --tab-bg: #e5e7eb;
+    --tab-text: #111827;
 
-    .painel-botoes { display: flex; gap: 10px; margin-top: 4px; }
+    --thead: #f3f4f6;
+    --col-bg: #f9fafb;
+  }
 
-    .btn {
-      border: none; border-radius: 999px; padding: 8px 16px; font-size: 0.9rem;
-      cursor: pointer; display: inline-flex; align-items: center;
-      justify-content: center; gap: 6px; transition: 0.15s ease;
-    }
-    .btn-primario { background: #2563eb; color: #fff; }
-    .btn-secundario { background: #e5e7eb; color: #111827; }
-    .btn:hover { filter: brightness(0.95); transform: translateY(-0.5px); }
+  html[data-theme="dark"]{
+    --bg: #0b1220;
+    --text: #e5e7eb;
 
-    .conteudo { margin-top: 6px; border-top: 1px solid #e5e7eb; padding-top: 10px; font-size: 0.9rem; }
-    .conteudo h3 { margin-top: 0; margin-bottom: 8px; }
+    --panel: #0f172a;
+    --card: #111c33;
 
-    .linha-info {
-      display: flex; justify-content: space-between;
-      padding: 4px 0; border-bottom: 1px dashed #eee;
-    }
-    .campo-label { color: #4b5563; }
-    .campo-valor { font-weight: 500; color: #111827; margin-left: 8px; }
+    --muted: #a1a1aa;
+    --muted2: #9ca3af;
 
-    .processos-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-    .processo-card {
-      border-radius: 10px; border: 1px solid #e5e7eb;
-      padding: 8px 10px; cursor: pointer; transition: 0.15s ease;
-    }
-    .processo-card:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
-    .processo-titulo { font-weight: 500; margin-bottom: 3px; }
-    .processo-sub { font-size: 0.8rem; color: #4b5563; margin-bottom: 4px; }
-    .processo-status-label { font-size: 0.8rem; font-weight: 500; }
+    --border: #243049;
+    --border2: #2a3856;
 
-    .status-neutro { background: #ffffff; color: #111827; }
-    .status-embreve { background: #fef3c7; color: #7c2d12; }
-    .status-atrasado { background: #fee2e2; color: #7f1d1d; }
-    .status-feito { background: #dcfce7; color: #065f46; }
+    --shadow: 0 10px 26px rgba(0,0,0,0.35);
 
-    /* visão geral em tabela */
-    .tabela-visao-geral {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: 0.8rem;
-    }
-    .tabela-visao-geral th,
-    .tabela-visao-geral td {
-      border: 1px solid #e5e7eb;
-      padding: 4px 6px;
-    }
-    .tabela-visao-geral th {
-      background: #f3f4f6;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      font-weight: 600;
-    }
-    .col-turma {
-      text-align: left;
-      white-space: nowrap;
-      font-weight: 500;
-      background: #f9fafb;
-    }
-    .cel-processo {
-      text-align: center;
-      min-width: 90px;
-    }
-    /* ===== QUADRO DE HORÁRIOS ===== */
-    .schedule-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      margin: 6px 0 10px 0;
-      padding: 8px 10px;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      background: #f9fafb;
-    }
+    --hover: rgba(37, 99, 235, 0.18);
+    --selected: rgba(37, 99, 235, 0.22);
+    --selected-border: #60a5fa;
 
-    .schedule-controls .left {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+    --input-bg: #0b1220;
+    --input-border: #2a3856;
 
-    .chk {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      font-size: 0.85rem;
-      color: #111827;
-      cursor: pointer;
-      user-select: none;
-    }
+    --tab-bg: #1f2a44;
+    --tab-text: #e5e7eb;
 
-    .chk input { transform: translateY(1px); }
+    --thead: #14203a;
+    --col-bg: #0b1220;
+  }
 
-    .schedule-wrap {
-      overflow: auto;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-    }
+  body { margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+  h1 { text-align: center; margin-bottom: 20px; }
 
-    .schedule-table {
-      border-collapse: collapse;
-      width: 100%;
-      min-width: 820px;
-      font-size: 0.82rem;
-      background: #fff;
-    }
+  .layout { display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 20px; align-items: flex-start; }
 
-    .schedule-table th,
-    .schedule-table td {
-      border: 1px solid #e5e7eb;
-      padding: 8px;
-      vertical-align: top;
-    }
+  .lista-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .lista-header-title { font-weight: 600; font-size: 0.95rem; }
+  .filtros-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
-    .schedule-table thead th {
-      background: #f3f4f6;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      font-weight: 700;
-    }
+  /* ✅ filtros com texto legível no dark */
+  .filtro-select{
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--input-border);
+    font-size: 0.8rem;
+    background: var(--input-bg);
+    color: var(--text) !important;
+  }
 
-    .schedule-table .col-hora {
-      background: #f9fafb;
-      position: sticky;
-      left: 0;
-      z-index: 3;
-      font-weight: 700;
-      white-space: nowrap;
-      width: 92px;
-    }
+  /* ✅ dropdown options no dark */
+  html[data-theme="dark"] .filtro-select option{
+    background: var(--panel) !important;
+    color: var(--text) !important;
+  }
 
-    .slot-cell {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-height: 46px;
-    }
+  .turma-lista {
+    background: var(--panel); border-radius: 12px; padding: 15px;
+    box-shadow: var(--shadow); max-height: 80vh; overflow-y: auto;
+  }
+  .turma-card {
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer;
+    border: 1px solid var(--border2); display: flex; flex-direction: column; gap: 4px;
+    transition: 0.15s ease;
+    background: var(--card);
+  }
+  .turma-card:hover { background: var(--hover); transform: translateY(-1px); }
+  .turma-card.selecionada { border-color: var(--selected-border); background: var(--selected); }
+  .turma-nome { font-weight: 600; font-size: 0.95rem; }
+  .turma-meta { font-size: 0.8rem; color: var(--muted); }
 
-    .slot-card {
-      border-radius: 10px;
-      border: 1px solid #e5e7eb;
-      padding: 8px 10px;
-      background: #ffffff;
-      cursor: pointer;
-      transition: 0.12s ease;
-    }
+  .badge {
+    display: inline-block; font-size: 0.75rem; padding: 2px 8px;
+    border-radius: 999px; color: #fff; margin-right: 4px;
+  }
+  .badge-status-andamento { background: #16a34a; }
+  .badge-status-formacao { background: #eab308; }
+  .badge-status-encerrada { background: #dc2626; }
 
-    .slot-card:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
+  .badge-kids { background: #3b82f6; }
+  .badge-teens { background: #f97316; }
+  .badge-young { background: #a855f7; }
 
-    .slot-title {
-      font-weight: 700;
-      line-height: 1.15;
-      margin-top: 4px;
-    }
+  .painel {
+    background: var(--panel); border-radius: 12px; padding: 16px;
+    box-shadow: var(--shadow);
+    min-height: 200px; display: flex; flex-direction: column; gap: 10px;
+  }
 
-    .slot-sub {
-      font-size: 0.78rem;
-      color: #4b5563;
-      margin-top: 2px;
-    }
+  /* abas do painel */
+  .painel-tabs { display: flex; gap: 6px; margin-bottom: 4px; }
+  .tab-btn {
+    border: none; border-radius: 999px;
+    background: var(--tab-bg); color: var(--tab-text);
+    padding: 4px 10px; font-size: 0.8rem;
+    cursor: pointer; transition: 0.15s;
+  }
+  .tab-btn.tab-ativa { background: #2563eb; color: #fff; }
+  .tab-btn:hover { filter: brightness(0.95); }
 
-    .slot-andamento { border-left: 6px solid #16a34a; }
-    .slot-formacao  { border-left: 6px solid #eab308; }
+  .painel-titulo { font-size: 1.05rem; font-weight: 600; }
 
+  .painel-botoes { display: flex; gap: 10px; margin-top: 4px; }
 
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .btn {
+    border: none; border-radius: 999px; padding: 8px 16px; font-size: 0.9rem;
+    cursor: pointer; display: inline-flex; align-items: center;
+    justify-content: center; gap: 6px; transition: 0.15s ease;
+  }
+  .btn-primario { background: #2563eb; color: #fff; }
+  .btn-secundario { background: var(--tab-bg); color: var(--tab-text); }
+  .btn:hover { filter: brightness(0.95); transform: translateY(-0.5px); }
+
+  /* (opcional) botão de perigo usado no card */
+  .btn-perigo { background:#dc2626; color:#fff; }
+  .btn-perigo:hover { filter: brightness(0.95); }
+
+  .conteudo { margin-top: 6px; border-top: 1px solid var(--border); padding-top: 10px; font-size: 0.9rem; }
+  .conteudo h3 { margin-top: 0; margin-bottom: 8px; }
+
+  .linha-info {
+    display: flex; justify-content: space-between;
+    padding: 4px 0; border-bottom: 1px dashed var(--border);
+  }
+  .campo-label { color: var(--muted2); }
+  .campo-valor { font-weight: 500; color: var(--text); margin-left: 8px; }
+
+  .processos-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .processo-card {
+    border-radius: 10px; border: 1px solid var(--border);
+    padding: 8px 10px; cursor: pointer; transition: 0.15s ease;
+    background: var(--card);
+  }
+  .processo-card:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+  .processo-titulo { font-weight: 500; margin-bottom: 3px; }
+  .processo-sub { font-size: 0.8rem; color: var(--muted2); margin-bottom: 4px; }
+  .processo-status-label { font-size: 0.8rem; font-weight: 500; }
+
+  /* status (mantive suas cores originais) */
+  .status-neutro { background: #ffffff; color: #111827; }
+  .status-embreve { background: #fef3c7; color: #7c2d12; }
+  .status-atrasado { background: #fee2e2; color: #7f1d1d; }
+  .status-feito { background: #dcfce7; color: #065f46; }
+
+  /* visão geral em tabela */
+  .tabela-visao-geral {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.8rem;
+  }
+  .tabela-visao-geral th,
+  .tabela-visao-geral td {
+    border: 1px solid var(--border);
+    padding: 4px 6px;
+  }
+  .tabela-visao-geral th {
+    background: var(--thead);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* coluna Turma no dark */
+  .col-turma {
+    text-align: left;
+    white-space: nowrap;
+    font-weight: 600;
+    background: var(--col-bg);
+    color: var(--text) !important;
+  }
+
+  .cel-processo {
+    text-align: center;
+    min-width: 90px;
+    color: var(--text);
+  }
+
+  /* ===== QUADRO DE HORÁRIOS ===== */
+  .schedule-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    margin: 6px 0 10px 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--col-bg);
+  }
+
+  .schedule-controls .left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .chk {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .chk input { transform: translateY(1px); }
+
+  .schedule-wrap {
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .schedule-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 820px;
+    font-size: 0.82rem;
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  .schedule-table th,
+  .schedule-table td {
+    border: 1px solid var(--border);
+    padding: 8px;
+    vertical-align: top;
+  }
+
+  .schedule-table thead th {
+    background: var(--thead);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .schedule-table .col-hora {
+    background: var(--col-bg);
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    font-weight: 700;
+    white-space: nowrap;
+    width: 92px;
+    color: var(--text);
+  }
+
+  .slot-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 46px;
+  }
+
+  .slot-card {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    background: var(--card);
+    cursor: pointer;
+    transition: 0.12s ease;
+  }
+
+  .slot-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  .slot-title {
+    font-weight: 700;
+    line-height: 1.15;
+    margin-top: 4px;
+    color: var(--text);
+  }
+
+  .slot-sub {
+    font-size: 0.78rem;
+    color: var(--muted2);
+    margin-top: 2px;
+  }
+
+  .slot-andamento { border-left: 6px solid #16a34a; }
+  .slot-formacao  { border-left: 6px solid #eab308; }
+
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  /* =========================
+     DARK: melhorar leitura das datas (status cells)
+     ========================= */
+
+  html[data-theme="dark"] .status-neutro{
+    background: rgba(255,255,255,0.04) !important;
+    color: #e5e7eb !important;
+  }
+  html[data-theme="dark"] .status-embreve{
+    background: rgba(234,179,8,0.18) !important;
+    color: #fde68a !important;
+  }
+  html[data-theme="dark"] .status-atrasado{
+    background: rgba(220,38,38,0.18) !important;
+    color: #fecaca !important;
+  }
+  html[data-theme="dark"] .status-feito{
+    background: rgba(34,197,94,0.18) !important;
+    color: #bbf7d0 !important;
+  }
+  html[data-theme="dark"] .tabela-visao-geral td{
+    color: #e5e7eb;
+  }
   </style>
 </head>
+
 <body>
-  <h1>Painel de Turmas</h1>
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px;">
+    <h1 style="margin:0; flex:1; text-align:center;">Painel de Turmas</h1>
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Alternar modo noturno">
+      🌙
+    </button>
+  </div>
 
   <div class="layout">
     <!-- Lista de Turmas -->
@@ -254,7 +378,8 @@
             onclick="abrirFormularioNovaTurma()">
             + Nova turma
           </button>
-  </div>
+        </div>
+
         <div class="filtros-row">
           <select id="filtroNivel" class="filtro-select" onchange="alterarFiltros()">
             <option value="todos">Nível: todos</option>
@@ -262,6 +387,7 @@
             <option value="Teens">Teens</option>
             <option value="Young">Young</option>
           </select>
+
           <select id="filtroDia" class="filtro-select" onchange="alterarFiltros()">
             <option value="todos">Dia: todos</option>
             <option value="Segunda">Segunda</option>
@@ -271,9 +397,11 @@
             <option value="Sexta">Sexta</option>
             <option value="Sábado">Sábado</option>
           </select>
+
           <select id="filtroHorario" class="filtro-select" onchange="alterarFiltros()">
             <option value="todos">Horário: todos</option>
           </select>
+
           <select id="filtroStatus" class="filtro-select" onchange="alterarFiltros()">
             <option value="todas">Status: todos</option>
             <option value="Em andamento">Em andamento</option>
@@ -299,7 +427,7 @@
       </div>
 
       <div class="painel-titulo" id="tituloTurma">
-        Selecione uma turma à esquerda 
+        Selecione uma turma à esquerda
       </div>
 
       <div class="painel-botoes" id="botoesAcoes" style="display:none;">
@@ -316,1029 +444,1201 @@
   </div>
 
   <!-- SCRIPT COM FIREBASE + LÓGICA -->
- <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-  // === FUNÇÕES GLOBAIS DE EXCLUIR E FORM NOVA TURMA ===
-  let turmas = [];
-  let turmaSelecionada = null;
-  let modoPainel = "turma";
-  let filtroNivel = "todos";
-  let filtroDia = "todos";
-  let filtroHorario = "todos";
-  let filtroStatus = "todas";
-  let mostrarFormacaoNoHorario = true;
-  // ====== Datas (BR/ISO) ======
-function parseDateBRorISO(s) {
-  if (!s) return null;
-  s = String(s).trim();
-
-  // ISO: YYYY-MM-DD
-  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (m) {
-    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-    d.setHours(0,0,0,0);
-    return d;
-  }
-
-  // BR: DD/MM/YYYY
-  m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (m) {
-    const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-    d.setHours(0,0,0,0);
-    return d;
-  }
-
-  return null;
-}
-
-function dateToISO(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function isoToBR(iso) {
-  const d = parseDateBRorISO(iso);
-  if (!d) return "";
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yy = d.getFullYear();
-  return `${dd}/${mm}/${yy}`;
-}
-
-function parseWeekdayPT(dia) {
-  const map = {
-    "Segunda": 1,
-    "Terça": 2, "Terca": 2,
-    "Quarta": 3,
-    "Quinta": 4,
-    "Sexta": 5,
-    "Sábado": 6, "Sabado": 6
-  };
-  return map[dia] ?? null; // JS: 0=Dom ... 6=Sáb
-}
-
-function nextWeekdayOnOrAfter(d, targetJsWeekday) {
-  const cur = d.getDay();
-  const delta = (targetJsWeekday - cur + 7) % 7;
-  const nd = new Date(d);
-  nd.setDate(d.getDate() + delta);
-  nd.setHours(0,0,0,0);
-  return nd;
-}
-
-function normalizeExclusions(excludedList = []) {
-  // aceita: "YYYY-MM-DD" ou ["YYYY-MM-DD","YYYY-MM-DD"]
-  const single = new Set();
-  const ranges = [];
-
-  for (const item of excludedList) {
-    if (Array.isArray(item) && item.length === 2) {
-      const d1 = parseDateBRorISO(item[0]);
-      const d2 = parseDateBRorISO(item[1]);
-      if (!d1 || !d2) continue;
-      const a = d1 <= d2 ? d1 : d2;
-      const b = d1 <= d2 ? d2 : d1;
-      ranges.push([dateToISO(a), dateToISO(b)]);
-    } else {
-      const d = parseDateBRorISO(item);
-      if (!d) continue;
-      single.add(dateToISO(d));
+  <script type="module">
+    // =========================
+    // THEME (light/dark)
+    // =========================
+    function applyTheme(theme){
+      document.documentElement.setAttribute("data-theme", theme);
+      const btn = document.getElementById("themeToggle");
+      if (btn) btn.textContent = (theme === "dark") ? "☀️" : "🌙";
     }
-  }
-  return { single, ranges };
-}
-
-function inAnyRangeISO(iso, ranges) {
-  return ranges.some(([a,b]) => a <= iso && iso <= b);
-}
-
-function genValidClassDaysISO({ startDateStr, diaSemanaPT, count, excludedList = [] }) {
-  const start = parseDateBRorISO(startDateStr);
-  const wd = parseWeekdayPT(diaSemanaPT);
-  if (!start || wd === null) return { datesISO: [], skipped: [] };
-
-  const { single, ranges } = normalizeExclusions(excludedList);
-
-  // começa no primeiro dia correto (no ou após)
-  let cur = nextWeekdayOnOrAfter(start, wd);
-
-  const datesISO = [];
-  const skipped = [];
-
-  while (datesISO.length < count) {
-    const iso = dateToISO(cur);
-
-    let reason = null;
-    if (single.has(iso)) reason = "feriado/data pontual";
-    else if (inAnyRangeISO(iso, ranges)) reason = "período (recesso/férias)";
-
-    if (reason) skipped.push(`Pulou ${iso} (${reason})`);
-    else datesISO.push(iso);
-
-    cur = new Date(cur);
-    cur.setDate(cur.getDate() + 7);
-    cur.setHours(0,0,0,0);
-  }
-
-  return { datesISO, skipped };
-}
-
-function calcularProcessosPorAulas(datesISO) {
-  // 1-based: aula 1 é datesISO[0]
-  const n = datesISO.length;
-  const get = (aulaN) => (aulaN >= 1 && aulaN <= n) ? isoToBR(datesISO[aulaN - 1]) : "";
-
-  return {
-    // Tabela do print
-    grupoWhats:       get(2),                 // 2ª semana
-    alinhamentoPais:  get(4),                 // 4ª semana
-    audioFeedback:    get(9),                 // 9ª semana
-    videosAlunos:     get(14),                // 14ª semana (pode trocar pra 15 se quiser)
-
-    rematricula1:     get(n - 4),             // 4 semanas antes do TCC (se TCC = última aula)
-    mensagemTCC:      get(n - 1),             // 1 semana antes
-    bombomCartao:     get(n),                 // última aula
-    dataTCC:          get(n),                 // TCC na última aula (aqui é a decisão)
-  };
-}
-const EXCLUSOES_PADRAO = [
-  ["2025-12-13", "2026-02-06"],
-  ["2026-07-05", "2026-08-02"],
-  "2025-11-15",
-  "2025-11-20",
-  "2025-12-08",
-  "2026-06-04",
-  "2026-09-07",
-  ["2026-10-12","2026-10-15"],
-];
-
-
-  function extrairMinutosHorario(horarioStr) {
-    const m = String(horarioStr || "").match(/(\d{1,2}):(\d{2})/);
-    if (!m) return null;
-    const hh = parseInt(m[1], 10);
-    const mm = parseInt(m[2], 10);
-    if (isNaN(hh) || isNaN(mm)) return null;
-    return hh * 60 + mm;
-  }
-
-  function formatarHora(min) {
-    const hh = String(Math.floor(min / 60)).padStart(2, "0");
-    const mm = String(min % 60).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
-
-  const cicloStatusProcesso = ["neutro", "embreve", "atrasado", "feito"];
-  const statusLabelMap = {
-    neutro: "Neutro",
-    embreve: "Em breve",
-    atrasado: "Atrasado",
-    feito: "Feito"
-  };
-  let statusProcessosFirebase = {};
-
-  window.excluirTurmaSelecionada = function (idTurma, ev) {
-    if (ev) ev.stopPropagation();
-    const id = idTurma || (turmaSelecionada && turmaSelecionada.id);
-    if (!id) {
-      alert("Nenhuma turma selecionada.");
-      return;
+    function getPreferredTheme(){
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") return saved;
+      return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
     }
+    const initialTheme = getPreferredTheme();
+    applyTheme(initialTheme);
 
-    const turma = turmas.find(t => t.id === id);
-    const nomeTurma = turma ? turma.nome : id;
-
-    const confirma = confirm(
-      `Deseja realmente EXCLUIR a turma "${nomeTurma}" (ID: ${id})?\n\n` +
-      "Essa ação não pode ser desfeita."
-    );
-    if (!confirma) return;
-
-    const turmaRef = ref(db, "turmas/" + id);
-    remove(turmaRef)
-      .then(() => {
-        const procRef = ref(db, "processos/" + id);
-        remove(procRef).catch(() => {});
-        alert("Turma excluída com sucesso!");
-        if (turmaSelecionada && turmaSelecionada.id === id) {
-          turmaSelecionada = null;
-        }
-        renderListaTurmas();
-        setModoPainel("overview");
-      })
-      .catch((err) => {
-        console.error("Erro ao excluir turma:", err);
-        alert("Erro ao excluir a turma. Veja o console.");
+    window.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("themeToggle");
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        const cur = document.documentElement.getAttribute("data-theme") || "light";
+        const next = (cur === "dark") ? "light" : "dark";
+        localStorage.setItem("theme", next);
+        applyTheme(next);
       });
-  };
-
-  window.abrirFormularioNovaTurma = function () {
-    const modal = document.getElementById("novaTurmaContainer");
-    if (!modal) return;
-
-    document.getElementById("novaTurmaId").value = "";
-    document.getElementById("novaTurmaNome").value = "";
-    document.getElementById("novaTurmaNivel").value = "Teens";
-    document.getElementById("novaTurmaDia").value = "Sábado";
-    document.getElementById("novaTurmaHorario").value = "";
-    document.getElementById("novaTurmaStatus").value = "Em formação";
-    document.getElementById("novaTurmaAlunos").value = "";
-    document.getElementById("novaTurmaDataInicio").value = "";
-    document.getElementById("novaTurmaDataFim").value = "";
-
-    modal.style.display = "flex";
-  };
-
-  window.fecharFormularioNovaTurma = function () {
-    const modal = document.getElementById("novaTurmaContainer");
-    if (!modal) return;
-    modal.style.display = "none";
-  };
-
-  window.salvarNovaTurma = function () {
-    const modal = document.getElementById("novaTurmaContainer");
-    if (!modal) return;
-
-    const id         = document.getElementById("novaTurmaId").value.trim();
-    const nome       = document.getElementById("novaTurmaNome").value.trim();
-    const nivel      = document.getElementById("novaTurmaNivel").value;
-    const dia        = document.getElementById("novaTurmaDia").value;
-    const horario    = document.getElementById("novaTurmaHorario").value.trim();
-    const status     = document.getElementById("novaTurmaStatus").value;
-    const alunosStr  = document.getElementById("novaTurmaAlunos").value;
-    const dataInicio = document.getElementById("novaTurmaDataInicio").value.trim();
-    const dataFim    = document.getElementById("novaTurmaDataFim").value.trim();
-
-    if (!id || !nome || !horario) {
-      alert("Preencha pelo menos: ID, nome e horário da turma.");
-      return;
-    }
-
-    const jaExiste = turmas.some(t => t.id === id);
-    if (jaExiste) {
-      alert("Já existe uma turma com esse ID. Escolha outro ID.");
-      return;
-    }
-
-    const alunos = alunosStr ? parseInt(alunosStr, 10) : null;
-
-    const dadosNovaTurma = {
-      nome,
-      nivel,
-      dia,
-      horario,
-      status,
-      alunos: isNaN(alunos) ? null : alunos,
-      dataInicio: dataInicio || "",
-      dataPausa: "",
-      periodoFerias: "",
-      dataRetorno: "",
-      dataFim: dataFim || "",
-      totalAulas: null,
-      proximoModulo: "",
-      grupoWhats: "",
-      alinhamentoPais: "",
-      audioFeedback: "",
-      videosAlunos: "",
-      rematricula1: "",
-      mensagemTCC: "",
-      bombomCartao: "",
-      dataTCC: ""
-    };
-    // ===== AUTO: gerar calendário e preencher processos =====
-  const total = 21; // ou pegue de um input depois
-  if (dataInicio) {
-    const { datesISO, skipped } = genValidClassDaysISO({
-      startDateStr: dataInicio,     // aceita dd/mm/aaaa
-      diaSemanaPT: dia,             // "Quarta", "Sábado"...
-      count: total,
-      excludedList: EXCLUSOES_PADRAO
     });
 
-    if (datesISO.length === total) {
-      // opcional: guardar calendário de aulas
-      dadosNovaTurma.calendarioAulas = datesISO; // ["YYYY-MM-DD", ...]
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-      // totalAulas e dataFim automáticos (se quiser)
-      dadosNovaTurma.totalAulas = total;
-      if (!dataFim) {
-        dadosNovaTurma.dataFim = isoToBR(datesISO[datesISO.length - 1]);
+    // ====== STATE ======
+    let turmas = [];
+    let turmaSelecionada = null;
+    let modoPainel = "turma";
+    let filtroNivel = "todos";
+    let filtroDia = "todos";
+    let filtroHorario = "todos";
+    let filtroStatus = "todas";
+    let mostrarFormacaoNoHorario = true;
+
+    function escapeHTML(v) {
+      return String(v ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // ====== Datas (BR/ISO) ======
+    function parseDateBRorISO(s) {
+      if (!s) return null;
+      s = String(s).trim();
+
+      // ISO: YYYY-MM-DD
+      let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) {
+        const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        d.setHours(0,0,0,0);
+        return d;
       }
 
-      // preencher as datas dos processos
-      Object.assign(dadosNovaTurma, calcularProcessosPorAulas(datesISO));
+      // BR: DD/MM/YYYY
+      m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m) {
+        const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+        d.setHours(0,0,0,0);
+        return d;
+      }
 
-      // opcional: log do que foi pulado (pra debug)
-      dadosNovaTurma.logPulos = skipped.slice(0, 50).join(" | ");
-    }
-  }
-
-
-    const turmaRef = ref(db, "turmas/" + id);
-
-    set(turmaRef, dadosNovaTurma)
-      .then(() => {
-        alert("Turma criada com sucesso!");
-        modal.style.display = "none";
-        turmaSelecionada = { id, ...dadosNovaTurma };
-        renderListaTurmas();
-        setModoPainel("turma");
-        selecionarTurma(id);
-      })
-      .catch((err) => {
-        console.error("Erro ao criar turma:", err);
-        alert("Erro ao criar turma. Veja o console para detalhes.");
-      });
-  };
-
-  // ===== CONFIG FIREBASE =====
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_DOMINIO.firebaseapp.com",
-    databaseURL: "https://painel-turmas-7a2e5-default-rtdb.firebaseio.com",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_BUCKET.appspot.com",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID"
-  };
-
-  const app  = initializeApp(firebaseConfig);
-  const db   = getDatabase(app);
-  window.salvarAlunosTurma = function () {
-    if (!turmaSelecionada) {
-      alert("Nenhuma turma selecionada.");
-      return;
+      return null;
     }
 
-    const input = document.getElementById("alunosTurmaInput");
-    if (!input) return;
+    function dateToISO(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
 
-    const turmaId = turmaSelecionada.id;
-    const v = input.value.trim();
+    function isoToBR(iso) {
+      const d = parseDateBRorISO(iso);
+      if (!d) return "";
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yy = d.getFullYear();
+      return `${dd}/${mm}/${yy}`;
+    }
 
-    // permite vazio -> null
-    let alunos = null;
-    if (v !== "") {
-      alunos = parseInt(v, 10);
-      if (isNaN(alunos) || alunos < 0) {
-        alert("Digite um número válido (0 ou maior), ou deixe vazio para limpar.");
+    // valida dd/mm/aaaa “estrito”
+    function parseDataBR(str) {
+      if (!str) return null;
+      const m = String(str).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (!m) return null;
+      const d = parseInt(m[1], 10);
+      const mo = parseInt(m[2], 10) - 1;
+      const y = parseInt(m[3], 10);
+      const date = new Date(y, mo, d);
+      if (isNaN(date.getTime())) return null;
+      date.setHours(0, 0, 0, 0);
+      // garante que o JS não “corrigiu” (ex 32/01 vira 01/02)
+      if (date.getFullYear() !== y || date.getMonth() !== mo || date.getDate() !== d) return null;
+      return date;
+    }
+
+    function parseWeekdayPT(dia) {
+      const map = {
+        "Segunda": 1,
+        "Terça": 2, "Terca": 2,
+        "Quarta": 3,
+        "Quinta": 4,
+        "Sexta": 5,
+        "Sábado": 6, "Sabado": 6
+      };
+      return map[dia] ?? null; // JS: 0=Dom ... 6=Sáb
+    }
+
+    function nextWeekdayOnOrAfter(d, targetJsWeekday) {
+      const cur = d.getDay();
+      const delta = (targetJsWeekday - cur + 7) % 7;
+      const nd = new Date(d);
+      nd.setDate(d.getDate() + delta);
+      nd.setHours(0,0,0,0);
+      return nd;
+    }
+
+    function normalizeExclusions(excludedList = []) {
+      const single = new Set();
+      const ranges = [];
+
+      for (const item of excludedList) {
+        if (Array.isArray(item) && item.length === 2) {
+          const d1 = parseDateBRorISO(item[0]);
+          const d2 = parseDateBRorISO(item[1]);
+          if (!d1 || !d2) continue;
+          const a = d1 <= d2 ? d1 : d2;
+          const b = d1 <= d2 ? d2 : d1;
+          ranges.push([dateToISO(a), dateToISO(b)]);
+        } else {
+          const d = parseDateBRorISO(item);
+          if (!d) continue;
+          single.add(dateToISO(d));
+        }
+      }
+      return { single, ranges };
+    }
+
+    function inAnyRangeISO(iso, ranges) {
+      return ranges.some(([a,b]) => a <= iso && iso <= b);
+    }
+
+    function genValidClassDaysISO({ startDateStr, diaSemanaPT, count, excludedList = [] }) {
+      const start = parseDateBRorISO(startDateStr);
+      const wd = parseWeekdayPT(diaSemanaPT);
+      if (!start || wd === null) return { datesISO: [], skipped: [] };
+
+      const { single, ranges } = normalizeExclusions(excludedList);
+
+      let cur = nextWeekdayOnOrAfter(start, wd);
+      const datesISO = [];
+      const skipped = [];
+
+      while (datesISO.length < count) {
+        const iso = dateToISO(cur);
+
+        let reason = null;
+        if (single.has(iso)) reason = "feriado/data pontual";
+        else if (inAnyRangeISO(iso, ranges)) reason = "período (recesso/férias)";
+
+        if (reason) skipped.push(`Pulou ${iso} (${reason})`);
+        else datesISO.push(iso);
+
+        cur = new Date(cur);
+        cur.setDate(cur.getDate() + 7);
+        cur.setHours(0,0,0,0);
+      }
+
+      return { datesISO, skipped };
+    }
+
+    function calcularProcessosPorAulas(datesISO) {
+      const n = datesISO.length;
+      const get = (aulaN) => (aulaN >= 1 && aulaN <= n) ? isoToBR(datesISO[aulaN - 1]) : "";
+      return {
+        grupoWhats:       get(2),
+        alinhamentoPais:  get(4),
+        audioFeedback:    get(9),
+        videosAlunos:     get(14),
+        rematricula1:     get(n - 4),
+        mensagemTCC:      get(n - 1),
+        bombomCartao:     get(n),
+        dataTCC:          get(n),
+      };
+    }
+
+    const EXCLUSOES_PADRAO = [
+      ["2025-12-13", "2026-02-06"],
+      ["2026-07-05", "2026-08-02"],
+      "2025-11-15",
+      "2025-11-20",
+      "2025-12-08",
+      "2026-06-04",
+      "2026-09-07",
+      ["2026-10-12","2026-10-15"],
+    ];
+
+    function extrairMinutosHorario(horarioStr) {
+      const m = String(horarioStr || "").match(/(\d{1,2}):(\d{2})/);
+      if (!m) return null;
+      const hh = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      if (isNaN(hh) || isNaN(mm)) return null;
+      return hh * 60 + mm;
+    }
+
+    function formatarHora(min) {
+      const hh = String(Math.floor(min / 60)).padStart(2, "0");
+      const mm = String(min % 60).padStart(2, "0");
+      return `${hh}:${mm}`;
+    }
+
+    const cicloStatusProcesso = ["neutro", "embreve", "atrasado", "feito"];
+    const statusLabelMap = { neutro:"Neutro", embreve:"Em breve", atrasado:"Atrasado", feito:"Feito" };
+    let statusProcessosFirebase = {};
+
+    // ===== Validações =====
+    function validarIdTurma(id) { return /^[0-9]{3,10}$/.test(id); }
+    function validarHorario(h) { return /^([01]\d|2[0-3]):([0-5]\d)$/.test(String(h || "").trim()); }
+
+    // ===== CONFIG FIREBASE =====
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_DOMINIO.firebaseapp.com",
+      databaseURL: "https://painel-turmas-7a2e5-default-rtdb.firebaseio.com",
+      projectId: "SEU_PROJECT_ID",
+      storageBucket: "SEU_BUCKET.appspot.com",
+      messagingSenderId: "SEU_SENDER_ID",
+      appId: "SEU_APP_ID"
+    };
+    const app  = initializeApp(firebaseConfig);
+    const db   = getDatabase(app);
+
+    // ====== CRUD: excluir / modal nova turma ======
+    window.excluirTurmaSelecionada = function (idTurma, ev) {
+      if (ev) ev.stopPropagation();
+      const id = idTurma || (turmaSelecionada && turmaSelecionada.id);
+      if (!id) { alert("Nenhuma turma selecionada."); return; }
+
+      const turma = turmas.find(t => t.id === id);
+      const nomeTurma = turma ? turma.nome : id;
+
+      const confirma = confirm(
+        `Deseja realmente EXCLUIR a turma "${nomeTurma}" (ID: ${id})?\n\n` +
+        "Essa ação não pode ser desfeita."
+      );
+      if (!confirma) return;
+
+      const turmaRef = ref(db, "turmas/" + id);
+      remove(turmaRef)
+        .then(() => {
+          const procRef = ref(db, "processos/" + id);
+          remove(procRef).catch(() => {});
+          alert("Turma excluída com sucesso!");
+          if (turmaSelecionada && turmaSelecionada.id === id) turmaSelecionada = null;
+          renderListaTurmas();
+          window.setModoPainel("overview");
+        })
+        .catch((err) => {
+          console.error("Erro ao excluir turma:", err);
+          alert("Erro ao excluir a turma. Veja o console.");
+        });
+    };
+
+    window.abrirFormularioNovaTurma = function () {
+      const modal = document.getElementById("novaTurmaContainer");
+      if (!modal) return;
+
+      document.getElementById("novaTurmaId").value = "";
+      document.getElementById("novaTurmaNome").value = "";
+      document.getElementById("novaTurmaNivel").value = "Teens";
+      document.getElementById("novaTurmaDia").value = "Sábado";
+      document.getElementById("novaTurmaHorario").value = "";
+      document.getElementById("novaTurmaStatus").value = "Em formação";
+      document.getElementById("novaTurmaAlunos").value = "";
+      document.getElementById("novaTurmaDataInicio").value = "";
+      document.getElementById("novaTurmaDataFim").value = "";
+
+      modal.style.display = "flex";
+    };
+
+    window.fecharFormularioNovaTurma = function () {
+      const modal = document.getElementById("novaTurmaContainer");
+      if (!modal) return;
+      modal.style.display = "none";
+    };
+
+    window.salvarNovaTurma = function () {
+      const modal = document.getElementById("novaTurmaContainer");
+      if (!modal) return;
+
+      const id         = document.getElementById("novaTurmaId").value.trim();
+      const nome       = document.getElementById("novaTurmaNome").value.trim();
+      const nivel      = document.getElementById("novaTurmaNivel").value;
+      const dia        = document.getElementById("novaTurmaDia").value;
+      const horario    = document.getElementById("novaTurmaHorario").value.trim();
+      const status     = document.getElementById("novaTurmaStatus").value;
+      const alunosStr  = document.getElementById("novaTurmaAlunos").value;
+      const dataInicio = document.getElementById("novaTurmaDataInicio").value.trim();
+      const dataFim    = document.getElementById("novaTurmaDataFim").value.trim();
+
+      // ✅ obrigatório
+      if (!id || !nome || !horario || !dataInicio) {
+        alert("Preencha: ID, nome, horário e data de início.");
         return;
       }
-    }
+      if (!validarIdTurma(id)) {
+        alert("ID inválido. Use apenas números (ex: 6761).");
+        return;
+      }
+      if (!validarHorario(horario)) {
+        alert("Horário inválido. Use HH:MM (ex: 18:30).");
+        return;
+      }
 
-    const alunosRef = ref(db, `turmas/${turmaId}/alunos`);
+      // data início: aceita BR ou ISO, salva em BR
+      const dIni = parseDateBRorISO(dataInicio);
+      if (!dIni) {
+        alert("Data de início inválida. Use dd/mm/aaaa ou yyyy-mm-dd.");
+        return;
+      }
+      const dataInicioBR = isoToBR(dateToISO(dIni));
 
-    set(alunosRef, alunos)
-      .then(() => {
-        // atualiza em memória
-        turmaSelecionada.alunos = alunos;
-        const idx = turmas.findIndex(t => t.id === turmaId);
-        if (idx >= 0) turmas[idx].alunos = alunos;
+      // data fim opcional: aceita BR ou ISO, salva em BR
+      let dataFimBR = "";
+      if (dataFim) {
+        const dFim = parseDateBRorISO(dataFim);
+        if (!dFim) {
+          alert("Data de término inválida. Use dd/mm/aaaa ou yyyy-mm-dd.");
+          return;
+        }
+        dataFimBR = isoToBR(dateToISO(dFim));
+      }
 
-        renderListaTurmas(); // atualiza a lista (Alunos: ...)
-        if (modoPainel === "schedule") renderQuadroHorarios(); // se você estiver usando o quadro
+      const jaExiste = turmas.some(t => t.id === id);
+      if (jaExiste) {
+        alert("Já existe uma turma com esse ID. Escolha outro ID.");
+        return;
+      }
 
-        alert("Número de alunos atualizado!");
-      })
-      .catch((err) => {
-        console.error("Erro ao atualizar alunos:", err);
-        alert("Erro ao salvar. Veja o console.");
+      const alunos = alunosStr ? parseInt(alunosStr, 10) : null;
+
+      const dadosNovaTurma = {
+        nome,
+        nivel,
+        dia,
+        horario,
+        status,
+        alunos: (alunosStr === "" || isNaN(alunos)) ? null : alunos,
+
+        dataInicio: dataInicioBR,
+        dataPausa: "",
+        periodoFerias: "",
+        dataRetorno: "",
+        dataFim: dataFimBR || "",
+
+        totalAulas: null,
+        proximoModulo: "",
+
+        grupoWhats: "",
+        alinhamentoPais: "",
+        audioFeedback: "",
+        videosAlunos: "",
+        rematricula1: "",
+        mensagemTCC: "",
+        bombomCartao: "",
+        dataTCC: ""
+      };
+
+      // ===== AUTO: gerar calendário e preencher processos =====
+      const total = 21;
+      const { datesISO, skipped } = genValidClassDaysISO({
+        startDateStr: dataInicioBR, // BR ou ISO funcionaria, mas já está BR
+        diaSemanaPT: dia,
+        count: total,
+        excludedList: EXCLUSOES_PADRAO
       });
-  };
 
+      if (datesISO.length === total) {
+        dadosNovaTurma.calendarioAulas = datesISO;
+        dadosNovaTurma.totalAulas = total;
+        if (!dataFim) dadosNovaTurma.dataFim = isoToBR(datesISO[datesISO.length - 1]);
+        Object.assign(dadosNovaTurma, calcularProcessosPorAulas(datesISO));
+        dadosNovaTurma.logPulos = skipped.slice(0, 50).join(" | ");
+      }
 
-  const processosDef = [
-    { id: "grupo_whats",    titulo: "Grupos / Manual",       campoData: "grupoWhats" },
-    { id: "alinhamento_pais", titulo: "Alinhamento pais",    campoData: "alinhamentoPais" },
-    { id: "audio_feedback", titulo: "Áudio + conteúdos",     campoData: "audioFeedback" },
-    { id: "videos_alunos",  titulo: "Vídeos alunos",         campoData: "videosAlunos" },
-    { id: "rematricula1",   titulo: "1ª rematrícula",        campoData: "rematricula1" },
-    { id: "mensagem_tcc",   titulo: "Mensagem TCC",          campoData: "mensagemTCC" },
-    { id: "bombom_cartao",  titulo: "Bombom c/ cartão",      campoData: "bombomCartao" },
-    { id: "data_tcc",       titulo: "TCC",                   campoData: "dataTCC" }
-  ];
+      const turmaRef = ref(db, "turmas/" + id);
 
-  const turmasRef = ref(db, "turmas");
-  const processosRootRef = ref(db, "processos");
+      set(turmaRef, dadosNovaTurma)
+        .then(() => {
+          alert("Turma criada com sucesso!");
+          modal.style.display = "none";
+          turmaSelecionada = { id, ...dadosNovaTurma };
+          renderListaTurmas();
+          window.setModoPainel("turma");
+          selecionarTurma(id);
+        })
+        .catch((err) => {
+          console.error("Erro ao criar turma:", err);
+          alert("Erro ao criar turma. Veja o console para detalhes.");
+        });
+    };
 
-  onValue(turmasRef, (snap) => {
-    const data = snap.val() || {};
-    turmas = Object.entries(data).map(([id, dados]) => ({ id, ...dados }));
+    // ===== Edição genérica de campos no painel =====
+    function normalizarValorCampo(campo, valorStr) {
+      const v = (valorStr ?? "").toString().trim();
 
-    if (turmaSelecionada) {
-      const encontrada = turmas.find(t => t.id === turmaSelecionada.id);
-      turmaSelecionada = encontrada || null;
+      if (campo === "alunos" || campo === "totalAulas") {
+        if (v === "") return null;
+        const n = parseInt(v, 10);
+        if (isNaN(n) || n < 0) throw new Error("Digite um número válido (0 ou maior), ou deixe vazio para limpar.");
+        return n;
+      }
+
+      const camposData = new Set(["dataInicio", "dataPausa", "dataRetorno", "dataFim"]);
+      if (camposData.has(campo)) {
+        if (v === "") return "";
+        const d = parseDateBRorISO(v);
+        if (!d) throw new Error("Data inválida. Use dd/mm/aaaa ou yyyy-mm-dd.");
+        return isoToBR(dateToISO(d));
+      }
+
+      return v;
     }
 
-    preencherOpcoesHorario();
-    renderListaTurmas();
+    window.salvarCampoTurma = function(campo, inputId) {
+      if (!turmaSelecionada) { alert("Nenhuma turma selecionada."); return; }
+      const el = document.getElementById(inputId);
+      if (!el) return;
 
-    if (modoPainel === "overview") {
-      renderVisaoGeral();
+      const turmaId = turmaSelecionada.id;
+
+      let valorFinal;
+      try {
+        // regra extra: dataInicio não pode ficar vazia
+        if (campo === "dataInicio" && el.value.trim() === "") {
+          alert("A data de início é obrigatória.");
+          return;
+        }
+        valorFinal = normalizarValorCampo(campo, el.value);
+      } catch (err) {
+        alert(err.message || "Valor inválido.");
+        return;
+      }
+
+      const campoRef = ref(db, `turmas/${turmaId}/${campo}`);
+      set(campoRef, valorFinal)
+        .then(() => {
+          turmaSelecionada[campo] = valorFinal;
+          const idx = turmas.findIndex(t => t.id === turmaId);
+          if (idx >= 0) turmas[idx][campo] = valorFinal;
+
+          window.mostrarSecao("acompanhar");
+          renderListaTurmas();
+          if (modoPainel === "schedule") renderQuadroHorarios();
+
+          alert("Salvo!");
+        })
+        .catch((err) => {
+          console.error("Erro ao salvar campo:", campo, err);
+          alert("Erro ao salvar. Veja o console.");
+        });
+    };
+
+    function linhaEditavelTexto({ label, campo, valor, placeholder = "-" }) {
+      const id = `edit_${campo}`;
+      return `
+        <div class="linha-info">
+          <span class="campo-label">${label}</span>
+          <span class="campo-valor" style="display:flex; gap:6px; align-items:center;">
+            <input
+              id="${id}"
+              type="text"
+              value="${escapeHTML((valor ?? "").toString())}"
+              placeholder="${escapeHTML(placeholder)}"
+              style="min-width:220px; padding:2px 6px; font-size:0.85rem; border:1px solid var(--input-border, #d1d5db); border-radius:6px; background:var(--input-bg, #f9fafb); color:var(--text, #111827);"
+            />
+            <button
+              type="button"
+              class="btn btn-primario"
+              style="padding:4px 10px; font-size:0.8rem;"
+              onclick="salvarCampoTurma('${campo}', '${id}')"
+            >Salvar</button>
+          </span>
+        </div>
+      `;
     }
-    if (modoPainel === "schedule") {
-      renderQuadroHorarios();
+
+    function linhaEditavelNumero({ label, campo, valor, placeholder = "" }) {
+      const id = `edit_${campo}`;
+      return `
+        <div class="linha-info">
+          <span class="campo-label">${label}</span>
+          <span class="campo-valor" style="display:flex; gap:6px; align-items:center;">
+            <input
+              id="${id}"
+              type="number"
+              min="0"
+              value="${escapeHTML(valor ?? "")}"
+              placeholder="${escapeHTML(placeholder)}"
+              style="width:110px; padding:2px 6px; font-size:0.85rem; border:1px solid var(--input-border, #d1d5db); border-radius:6px; background:var(--input-bg, #f9fafb); color:var(--text, #111827);"
+            />
+            <button
+              type="button"
+              class="btn btn-primario"
+              style="padding:4px 10px; font-size:0.8rem;"
+              onclick="salvarCampoTurma('${campo}', '${id}')"
+            >Salvar</button>
+          </span>
+        </div>
+      `;
     }
-  });
 
-  onValue(processosRootRef, (snap) => {
-    statusProcessosFirebase = snap.val() || {};
-    if (modoPainel === "overview") {
-      renderVisaoGeral();
+    function linhaEditavelSelect({ label, campo, valor, opcoes }) {
+      const id = `edit_${campo}`;
+      const opts = opcoes.map(o => {
+        const selected = (o === valor) ? "selected" : "";
+        return `<option value="${escapeHTML(o)}" ${selected}>${escapeHTML(o)}</option>`;
+      }).join("");
+
+      return `
+        <div class="linha-info">
+          <span class="campo-label">${label}</span>
+          <span class="campo-valor" style="display:flex; gap:6px; align-items:center;">
+            <select
+              id="${id}"
+              style="padding:2px 6px; font-size:0.85rem; border:1px solid var(--input-border, #d1d5db); border-radius:6px; background:var(--input-bg, #f9fafb); color:var(--text, #111827);"
+            >
+              ${opts}
+            </select>
+            <button
+              type="button"
+              class="btn btn-primario"
+              style="padding:4px 10px; font-size:0.8rem;"
+              onclick="salvarCampoTurma('${campo}', '${id}')"
+            >Salvar</button>
+          </span>
+        </div>
+      `;
     }
-  });
 
-  function criarBadgeStatus(status) {
-    const classe =
-      status === "Em andamento" ? "badge-status-andamento" :
-      status === "Em formação" ? "badge-status-formacao" :
-      "badge-status-encerrada";
-    return `<span class="badge ${classe}">${status}</span>`;
-  }
+    // ===== Definições de processos =====
+    const processosDef = [
+      { id: "grupo_whats",     titulo: "Grupos / Manual",       campoData: "grupoWhats" },
+      { id: "alinhamento_pais",titulo: "Alinhamento pais",      campoData: "alinhamentoPais" },
+      { id: "audio_feedback",  titulo: "Áudio + conteúdos",     campoData: "audioFeedback" },
+      { id: "videos_alunos",   titulo: "Vídeos alunos",         campoData: "videosAlunos" },
+      { id: "rematricula1",    titulo: "1ª rematrícula",        campoData: "rematricula1" },
+      { id: "mensagem_tcc",    titulo: "Mensagem TCC",          campoData: "mensagemTCC" },
+      { id: "bombom_cartao",   titulo: "Bombom c/ cartão",      campoData: "bombomCartao" },
+      { id: "data_tcc",        titulo: "TCC",                   campoData: "dataTCC" }
+    ];
 
-  function criarBadgeNivel(nivel) {
-    const n = (nivel || "").toLowerCase();
-    let classe = "badge-kids";
-    if (n === "teens") classe = "badge-teens";
-    if (n === "young") classe = "badge-young";
-    return `<span class="badge ${classe}">${nivel}</span>`;
-  }
+    // ===== Leitura do Firebase =====
+    const turmasRef = ref(db, "turmas");
+    const processosRootRef = ref(db, "processos");
 
-  function parseDataBR(str) {
-    if (!str) return null;
-    const m = String(str).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (!m) return null;
-    const d = parseInt(m[1], 10);
-    const mo = parseInt(m[2], 10) - 1;
-    const y = parseInt(m[3], 10);
-    const date = new Date(y, mo, d);
-    if (isNaN(date.getTime())) return null;
-    date.setHours(0, 0, 0, 0);
-    return date;
-  }
+    onValue(turmasRef, (snap) => {
+      const data = snap.val() || {};
+      turmas = Object.entries(data).map(([id, dados]) => ({ id, ...dados }));
 
-  function calcularStatusAutomatico(turma, procId) {
-    const def = processosDef.find(p => p.id === procId);
-    if (!def) return "neutro";
+      if (turmaSelecionada) {
+        const encontrada = turmas.find(t => t.id === turmaSelecionada.id);
+        turmaSelecionada = encontrada || null;
+      }
 
-    const valor = turma[def.campoData];
-    const dataProc = parseDataBR(valor);
-    if (!dataProc) return "neutro";
+      preencherOpcoesHorario();
+      renderListaTurmas();
 
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const diffDias = Math.round((dataProc - hoje) / (1000 * 60 * 60 * 24));
-
-    if (diffDias < 0)  return "atrasado";
-    if (diffDias <= 14) return "embreve";
-    return "neutro";
-  }
-
-  function getStatusFinal(turma, procId) {
-    const tInfo = statusProcessosFirebase[turma.id];
-    const reg   = tInfo && tInfo[procId];
-
-    if (reg && (reg.manual || reg.status === "feito")) {
-      return reg.status || "neutro";
-    }
-    return calcularStatusAutomatico(turma, procId);
-  }
-
- window.alterarFiltros = function() {
-  filtroNivel   = document.getElementById("filtroNivel").value;
-  filtroDia     = document.getElementById("filtroDia").value;
-  filtroHorario = document.getElementById("filtroHorario").value;
-  filtroStatus  = document.getElementById("filtroStatus").value;
-
-  turmaSelecionada = null;
-
-  if (modoPainel === "turma") {
-    document.getElementById("tituloTurma").textContent =
-      "Selecione uma turma à esquerda";
-    document.getElementById("botoesAcoes").style.display = "none";
-    document.getElementById("conteudoTurma").innerHTML = "";
-  }
-
-  renderListaTurmas();
-};
-
-  function preencherOpcoesHorario() {
-    const selectHorario = document.getElementById("filtroHorario");
-    selectHorario.innerHTML = '<option value="todos">Horário: todos</option>';
-    const horariosUnicos = Array.from(new Set(turmas.map(t => t.horario))).sort();
-    horariosUnicos.forEach(h => {
-      const opt = document.createElement("option");
-      opt.value = h;
-      opt.textContent = h;
-      selectHorario.appendChild(opt);
+      if (modoPainel === "overview") renderVisaoGeral();
+      if (modoPainel === "schedule") renderQuadroHorarios();
     });
-  }
 
-  function renderListaTurmas() {
-    const lista  = document.getElementById("listaTurmas");
-    const header = lista.querySelector(".lista-header");
-    lista.innerHTML = "";
-    if (header) lista.appendChild(header);
-
-    const filtradas = turmas.filter(t => {
-      if (filtroNivel   !== "todos" && t.nivel   !== filtroNivel)   return false;
-      if (filtroDia     !== "todos" && t.dia     !== filtroDia)     return false;
-      if (filtroHorario !== "todos" && t.horario !== filtroHorario) return false;
-      if (filtroStatus  !== "todas" && t.status  !== filtroStatus)  return false;
-      return true;
+    onValue(processosRootRef, (snap) => {
+      statusProcessosFirebase = snap.val() || {};
+      if (modoPainel === "overview") renderVisaoGeral();
     });
 
-    filtradas.forEach(turma => {
-      const div = document.createElement("div");
-      div.className = "turma-card";
-      div.dataset.id = turma.id;
-      div.innerHTML = `
-        <div>${criarBadgeStatus(turma.status)} ${criarBadgeNivel(turma.nivel)}</div>
-        <div class="turma-nome">${turma.nome}</div>
-        <div class="turma-meta">
-          Dia: ${turma.dia} • Horário: ${turma.horario}<br>
-          Alunos: ${turma.alunos || "-"}<br>
-          Início: ${turma.dataInicio || "-"} • Término: ${turma.dataFim || "-"}<br>
-          <button
-            class="btn btn-perigo"
-            style="margin-top: 6px; font-size:0.75rem; padding:4px 8px;"
-            onclick="excluirTurmaSelecionada('${turma.id}', event)">
-            Excluir turma
-          </button>
-        </div>`;
-      div.addEventListener("click", () => selecionarTurma(turma.id));
-      lista.appendChild(div);
-    });
-
-    if (filtradas.length === 0) {
-      const vazio = document.createElement("div");
-      vazio.style.fontSize = "0.85rem";
-      vazio.style.color = "#6b7280";
-      vazio.style.marginTop = "8px";
-      vazio.textContent = "Nenhuma turma encontrada com esses filtros.";
-      lista.appendChild(vazio);
+    // ===== badges =====
+    function criarBadgeStatus(status) {
+      const classe =
+        status === "Em andamento" ? "badge-status-andamento" :
+        status === "Em formação" ? "badge-status-formacao" :
+        "badge-status-encerrada";
+      return `<span class="badge ${classe}">${escapeHTML(status)}</span>`;
     }
-  }
 
- function selecionarTurma(id) {
-  turmaSelecionada = turmas.find(t => t.id === id);
+    function criarBadgeNivel(nivel) {
+      const n = (nivel || "").toLowerCase();
+      let classe = "badge-kids";
+      if (n === "teens") classe = "badge-teens";
+      if (n === "young") classe = "badge-young";
+      return `<span class="badge ${classe}">${escapeHTML(nivel)}</span>`;
+    }
 
-  document.querySelectorAll(".turma-card").forEach(card => {
-    card.classList.toggle("selecionada", card.dataset.id === id);
-  });
+    function calcularStatusAutomatico(turma, procId) {
+      const def = processosDef.find(p => p.id === procId);
+      if (!def) return "neutro";
 
-  if (modoPainel === "turma") {
-    const titulo   = document.getElementById("tituloTurma");
-    const botoes   = document.getElementById("botoesAcoes");
+      const valor = turma[def.campoData];
+      const dataProc = parseDataBR(valor);
+      if (!dataProc) return "neutro";
 
-    titulo.textContent = `Turma selecionada: ${turmaSelecionada.nome}`;
-    botoes.style.display = "flex";
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const diffDias = Math.round((dataProc - hoje) / (1000 * 60 * 60 * 24));
 
-    // ✅ abre automaticamente
-    mostrarSecao("acompanhar");
-  }
-}
-window.selecionarTurma = selecionarTurma;
+      if (diffDias < 0)  return "atrasado";
+      if (diffDias <= 14) return "embreve";
+      return "neutro";
+    }
 
-  window.selecionarTurma = selecionarTurma;
+    function getStatusFinal(turma, procId) {
+      const tInfo = statusProcessosFirebase[turma.id];
+      const reg   = tInfo && tInfo[procId];
 
-  window.setModoPainel = function(modo) {
-    modoPainel = modo;
-    const tabTurma     = document.getElementById("tabTurma");
-    const tabOverview  = document.getElementById("tabOverview");
-    const tabSchedule  = document.getElementById("tabSchedule");
+      if (reg && (reg.manual || reg.status === "feito")) {
+        return reg.status || "neutro";
+      }
+      return calcularStatusAutomatico(turma, procId);
+    }
 
-    tabTurma.classList.toggle("tab-ativa", modo === "turma");
-    tabOverview.classList.toggle("tab-ativa", modo === "overview");
-    tabSchedule.classList.toggle("tab-ativa", modo === "schedule");
+    // ===== filtros =====
+    window.alterarFiltros = function() {
+      filtroNivel   = document.getElementById("filtroNivel").value;
+      filtroDia     = document.getElementById("filtroDia").value;
+      filtroHorario = document.getElementById("filtroHorario").value;
+      filtroStatus  = document.getElementById("filtroStatus").value;
 
+      turmaSelecionada = null;
 
-    const titulo   = document.getElementById("tituloTurma");
-    const botoes   = document.getElementById("botoesAcoes");
-    const conteudo = document.getElementById("conteudoTurma");
+      if (modoPainel === "turma") {
+        document.getElementById("tituloTurma").textContent = "Selecione uma turma à esquerda";
+        document.getElementById("botoesAcoes").style.display = "none";
+        document.getElementById("conteudoTurma").innerHTML = "";
+      }
 
-    if (modo === "overview") {
-      botoes.style.display = "none";
-      titulo.textContent = "Visão geral dos processos";
-      renderVisaoGeral();
-    } else if (modo === "schedule") {
+      renderListaTurmas();
+    };
+
+    function preencherOpcoesHorario() {
+      const selectHorario = document.getElementById("filtroHorario");
+      selectHorario.innerHTML = '<option value="todos">Horário: todos</option>';
+      const horariosUnicos = Array.from(new Set(turmas.map(t => t.horario).filter(Boolean))).sort();
+      horariosUnicos.forEach(h => {
+        const opt = document.createElement("option");
+        opt.value = h;
+        opt.textContent = h;
+        selectHorario.appendChild(opt);
+      });
+    }
+
+    function renderListaTurmas() {
+      const lista  = document.getElementById("listaTurmas");
+      const header = lista.querySelector(".lista-header");
+      lista.innerHTML = "";
+      if (header) lista.appendChild(header);
+
+      const filtradas = turmas.filter(t => {
+        if (filtroNivel   !== "todos" && t.nivel   !== filtroNivel)   return false;
+        if (filtroDia     !== "todos" && t.dia     !== filtroDia)     return false;
+        if (filtroHorario !== "todos" && t.horario !== filtroHorario) return false;
+        if (filtroStatus  !== "todas" && t.status  !== filtroStatus)  return false;
+        return true;
+      });
+
+      filtradas.forEach(turma => {
+        const div = document.createElement("div");
+        div.className = "turma-card";
+        div.dataset.id = turma.id;
+        div.innerHTML = `
+          <div>${criarBadgeStatus(turma.status)} ${criarBadgeNivel(turma.nivel)}</div>
+          <div class="turma-nome">${escapeHTML(turma.nome)}</div>
+          <div class="turma-meta">
+            Dia: ${escapeHTML(turma.dia)} • Horário: ${escapeHTML(turma.horario)}<br>
+            Alunos: ${escapeHTML(turma.alunos ?? "-")}<br>
+            Início: ${escapeHTML(turma.dataInicio || "-")} • Término: ${escapeHTML(turma.dataFim || "-")}<br>
+            <button
+              class="btn btn-perigo"
+              style="margin-top: 6px; font-size:0.75rem; padding:4px 8px;"
+              onclick="excluirTurmaSelecionada('${turma.id}', event)">
+              Excluir turma
+            </button>
+          </div>`;
+        div.addEventListener("click", () => selecionarTurma(turma.id));
+        lista.appendChild(div);
+      });
+
+      if (filtradas.length === 0) {
+        const vazio = document.createElement("div");
+        vazio.style.fontSize = "0.85rem";
+        vazio.style.color = "#6b7280";
+        vazio.style.marginTop = "8px";
+        vazio.textContent = "Nenhuma turma encontrada com esses filtros.";
+        lista.appendChild(vazio);
+      }
+    }
+
+    function selecionarTurma(id) {
+      turmaSelecionada = turmas.find(t => t.id === id);
+
+      document.querySelectorAll(".turma-card").forEach(card => {
+        card.classList.toggle("selecionada", card.dataset.id === id);
+      });
+
+      if (modoPainel === "turma") {
+        const titulo   = document.getElementById("tituloTurma");
+        const botoes   = document.getElementById("botoesAcoes");
+
+        titulo.textContent = `Turma selecionada: ${turmaSelecionada.nome}`;
+        botoes.style.display = "flex";
+
+        window.mostrarSecao("acompanhar");
+      }
+    }
+    window.selecionarTurma = selecionarTurma;
+
+    // ✅ IMPORTANTE: em module, crie a função e depois exponha
+    function setModoPainel(modo) {
+      modoPainel = modo;
+
+      const tabTurma     = document.getElementById("tabTurma");
+      const tabOverview  = document.getElementById("tabOverview");
+      const tabSchedule  = document.getElementById("tabSchedule");
+
+      tabTurma.classList.toggle("tab-ativa", modo === "turma");
+      tabOverview.classList.toggle("tab-ativa", modo === "overview");
+      tabSchedule.classList.toggle("tab-ativa", modo === "schedule");
+
+      const titulo   = document.getElementById("tituloTurma");
+      const botoes   = document.getElementById("botoesAcoes");
+      const conteudo = document.getElementById("conteudoTurma");
+
+      if (modo === "overview") {
+        botoes.style.display = "none";
+        titulo.textContent = "Visão geral dos processos";
+        renderVisaoGeral();
+      } else if (modo === "schedule") {
         botoes.style.display = "none";
         titulo.textContent = "Quadro de horários";
         renderQuadroHorarios();
       } else {
-      if (turmaSelecionada) {
-        titulo.textContent = `Turma selecionada: ${turmaSelecionada.nome}`;
-        botoes.style.display = "flex";
-        conteudo.innerHTML =
-          `<p>Escolha uma opção acima: <strong>Acompanhar turma</strong> ou <strong>Processos da turma</strong>.</p>`;
-      } else {
-        titulo.textContent = "Selecione uma turma à esquerda";
-        botoes.style.display = "none";
-        conteudo.innerHTML = "";
+        if (turmaSelecionada) {
+          titulo.textContent = `Turma selecionada: ${turmaSelecionada.nome}`;
+          botoes.style.display = "flex";
+          conteudo.innerHTML = `<p>Escolha uma opção acima: <strong>Acompanhar turma</strong> ou <strong>Processos da turma</strong>.</p>`;
+        } else {
+          titulo.textContent = "Selecione uma turma à esquerda";
+          botoes.style.display = "none";
+          conteudo.innerHTML = "";
+        }
       }
     }
-  };
+    window.setModoPainel = setModoPainel;
 
-  window.mostrarSecao = function(tipo) {
-    if (!turmaSelecionada) return;
-    const conteudo = document.getElementById("conteudoTurma");
+    window.mostrarSecao = function(tipo) {
+      if (!turmaSelecionada) return;
+      const conteudo = document.getElementById("conteudoTurma");
 
-    if (tipo === "acompanhar") {
-      conteudo.innerHTML = `
-      <h3>📊 Acompanhar turma</h3>
+      if (tipo === "acompanhar") {
+        conteudo.innerHTML = `
+          <h3>📊 Acompanhar turma</h3>
 
-      <div class="linha-info">
-        <span class="campo-label"><strong>Status</strong></span>
-        <span class="campo-valor">
-          <select id="statusTurmaSelect" style="padding:2px 6px; font-size:0.85rem;">
-            <option value="Em andamento" ${turmaSelecionada.status === "Em andamento" ? "selected" : ""}>Em andamento</option>
-            <option value="Em formação"  ${turmaSelecionada.status === "Em formação"  ? "selected" : ""}>Em formação</option>
-            <option value="Encerrada"    ${turmaSelecionada.status === "Encerrada"    ? "selected" : ""}>Encerrada</option>
-          </select>
-          <button
-            type="button"
-            class="btn btn-primario"
-            style="margin-left:6px; padding:4px 10px; font-size:0.8rem;"
-            onclick="salvarStatusTurma()">
-            Salvar
-          </button>
-        </span>
-      </div>
+          ${linhaEditavelSelect({
+            label: "<strong>Status</strong>",
+            campo: "status",
+            valor: turmaSelecionada.status,
+            opcoes: ["Em andamento", "Em formação", "Encerrada"]
+          })}
 
-      <div class="linha-info"><span class="campo-label">Nível</span><span class="campo-valor">${turmaSelecionada.nivel}</span></div>
-      <div class="linha-info"><span class="campo-label">Dia / horário</span><span class="campo-valor">${turmaSelecionada.dia} • ${turmaSelecionada.horario}</span></div>
-      <div class="linha-info">
-        <span class="campo-label">Alunos</span>
-        <span class="campo-valor">
-          <input
-            id="alunosTurmaInput"
-            type="number"
-            min="0"
-            value="${turmaSelecionada.alunos ?? ""}"
-            style="width:90px; padding:2px 6px; font-size:0.85rem; border:1px solid #d1d5db; border-radius:6px;"
-          />
-          <button
-            type="button"
-            class="btn btn-primario"
-            style="margin-left:6px; padding:4px 10px; font-size:0.8rem;"
-            onclick="salvarAlunosTurma()"
-          >
-            Salvar
-          </button>
-        </span>
-      </div>
-      <div class="linha-info"><span class="campo-label">Data de início</span><span class="campo-valor">${turmaSelecionada.dataInicio || "-"}</span></div>
-      <div class="linha-info"><span class="campo-label">Pausa</span><span class="campo-valor">${turmaSelecionada.dataPausa || "-"}</span></div>
-      <div class="linha-info"><span class="campo-label">Período de férias</span><span class="campo-valor">${turmaSelecionada.periodoFerias || "-"}</span></div>
-      <div class="linha-info"><span class="campo-label">Retorno</span><span class="campo-valor">${turmaSelecionada.dataRetorno || "-"}</span></div>
-      <div class="linha-info"><span class="campo-label">Término</span><span class="campo-valor">${turmaSelecionada.dataFim || "-"}</span></div>
-      <div class="linha-info"><span class="campo-label">Total de aulas</span><span class="campo-valor">${turmaSelecionada.totalAulas || "-"}</span></div>
-      <div class="linha-info"><span class="campo-label">Próximo módulo</span><span class="campo-valor">${turmaSelecionada.proximoModulo || "-"}</span></div>
-    `;
-    } else if (tipo === "processos") {
-      conteudo.innerHTML = `
-        <h3>⚙️ Processos da turma</h3>
-        <p style="font-size:0.8rem; color:#6b7280; margin-bottom:8px;">
-          Clique em cada processo para mudar o status: neutro → em breve → atrasado → feito.
+          <div class="linha-info"><span class="campo-label">Nível</span><span class="campo-valor">${escapeHTML(turmaSelecionada.nivel)}</span></div>
+          <div class="linha-info"><span class="campo-label">Dia / horário</span><span class="campo-valor">${escapeHTML(turmaSelecionada.dia)} • ${escapeHTML(turmaSelecionada.horario)}</span></div>
+
+          ${linhaEditavelNumero({ label:"Alunos", campo:"alunos", valor: turmaSelecionada.alunos ?? "" })}
+
+          ${linhaEditavelTexto({ label:"Data de início", campo:"dataInicio", valor: turmaSelecionada.dataInicio || "", placeholder:"dd/mm/aaaa" })}
+          ${linhaEditavelTexto({ label:"Pausa", campo:"dataPausa", valor: turmaSelecionada.dataPausa || "", placeholder:"dd/mm/aaaa" })}
+          ${linhaEditavelTexto({ label:"Período de férias", campo:"periodoFerias", valor: turmaSelecionada.periodoFerias || "", placeholder:"ex: Dezembro" })}
+          ${linhaEditavelTexto({ label:"Retorno", campo:"dataRetorno", valor: turmaSelecionada.dataRetorno || "", placeholder:"dd/mm/aaaa" })}
+          ${linhaEditavelTexto({ label:"Término", campo:"dataFim", valor: turmaSelecionada.dataFim || "", placeholder:"dd/mm/aaaa" })}
+
+          ${linhaEditavelNumero({ label:"Total de aulas", campo:"totalAulas", valor: turmaSelecionada.totalAulas ?? "" })}
+
+          ${linhaEditavelTexto({ label:"Próximo módulo", campo:"proximoModulo", valor: turmaSelecionada.proximoModulo || "", placeholder:"ex: Teens 2" })}
+        `;
+      } else if (tipo === "processos") {
+        conteudo.innerHTML = `
+          <h3>⚙️ Processos da turma</h3>
+          <p style="font-size:0.8rem; color:#6b7280; margin-bottom:8px;">
+            Clique no card para mudar status: neutro → em breve → atrasado → feito.
+            Clique na data para editar.
+          </p>
+          <div class="processos-grid">
+            ${criarCardProcesso("grupo_whats", "Grupos de WhatsApp + manual", turmaSelecionada.grupoWhats)}
+            ${criarCardProcesso("alinhamento_pais", "Alinhamento com os pais", turmaSelecionada.alinhamentoPais)}
+            ${criarCardProcesso("audio_feedback", "Áudio de feedback + conteúdos", turmaSelecionada.audioFeedback)}
+            ${criarCardProcesso("videos_alunos", "Vídeos dos alunos", turmaSelecionada.videosAlunos)}
+            ${criarCardProcesso("rematricula1", "1ª mensagem de rematrícula", turmaSelecionada.rematricula1)}
+            ${criarCardProcesso("mensagem_tcc", "Mensagem sobre o TCC", turmaSelecionada.mensagemTCC)}
+            ${criarCardProcesso("bombom_cartao", "Bombom com cartão", turmaSelecionada.bombomCartao)}
+            ${criarCardProcesso("data_tcc", "Data da apresentação do TCC", turmaSelecionada.dataTCC)}
+          </div>
+        `;
+        inicializarProcessosClicaveis();
+      }
+    };
+
+    function criarCardProcesso(idProc, titulo, subtitulo) {
+      return `
+        <div class="processo-card status-neutro" data-status="neutro"
+             data-key="${escapeHTML(turmaSelecionada.id)}::${escapeHTML(idProc)}">
+          <div class="processo-titulo">${escapeHTML(titulo)}</div>
+          <div class="processo-sub">${escapeHTML(subtitulo || "-")}</div>
+          <div class="processo-status-label">Status: Neutro</div>
+        </div>`;
+    }
+
+    function aplicarEstadoNoCard(card, estado) {
+      if (!cicloStatusProcesso.includes(estado)) estado = "neutro";
+      card.dataset.status = estado;
+      cicloStatusProcesso.forEach(s => card.classList.remove("status-" + s));
+      card.classList.add("status-" + estado);
+
+      const label = card.querySelector(".processo-status-label");
+      if (label) label.textContent = "Status: " + statusLabelMap[estado];
+    }
+
+    function inicializarProcessosClicaveis() {
+      const cards = document.querySelectorAll(".processo-card");
+
+      cards.forEach(card => {
+        const [turmaId, procId] = card.dataset.key.split("::");
+        const turmaObj = turmas.find(t => t.id === turmaId);
+        if (!turmaObj) return;
+
+        const estadoInicial = getStatusFinal(turmaObj, procId);
+        aplicarEstadoNoCard(card, estadoInicial);
+
+        const caminhoRef = ref(db, `processos/${turmaId}/${procId}`);
+
+        // clique no card: muda status
+        card.addEventListener("click", () => {
+          let atual = card.dataset.status || "neutro";
+          let i = cicloStatusProcesso.indexOf(atual);
+          let proximo = cicloStatusProcesso[(i + 1) % cicloStatusProcesso.length];
+
+          aplicarEstadoNoCard(card, proximo);
+          set(caminhoRef, { status: proximo, manual: true });
+        });
+
+        // clique na data: editar data do processo (normaliza p/ dd/mm/aaaa)
+        const subEl = card.querySelector(".processo-sub");
+        if (subEl) {
+          subEl.style.textDecoration = "underline";
+          subEl.style.cursor = "pointer";
+          subEl.title = "Clique para editar a data";
+
+          subEl.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+
+            const def = processosDef.find(p => p.id === procId);
+            if (!def) return;
+            const campo = def.campoData;
+
+            const valorAtual = turmaObj[campo] || "";
+            const novoValor = prompt("Digite a data (dd/mm/aaaa ou yyyy-mm-dd) ou deixe vazio:", valorAtual);
+            if (novoValor === null) return;
+
+            const novoRaw = novoValor.trim();
+            let novo = "";
+
+            if (novoRaw !== "") {
+              const d = parseDateBRorISO(novoRaw);
+              if (!d) { alert("Data inválida."); return; }
+              novo = isoToBR(dateToISO(d));
+            }
+
+            const turmaCampoRef = ref(db, `turmas/${turmaId}/${campo}`);
+            set(turmaCampoRef, novo)
+              .then(() => {
+                turmaObj[campo] = novo;
+                subEl.textContent = novo || "-";
+
+                // se o override era manual e NÃO era "feito", remove (volta automático)
+                const reg = statusProcessosFirebase?.[turmaId]?.[procId];
+                if (reg?.manual && reg.status !== "feito") {
+                  const overrideRef = ref(db, `processos/${turmaId}/${procId}`);
+                  remove(overrideRef).catch(() => {});
+                }
+
+                const novoStatus = getStatusFinal(turmaObj, procId);
+                aplicarEstadoNoCard(card, novoStatus);
+              })
+              .catch(err => {
+                console.error("Erro ao atualizar data do processo:", err);
+                alert("Erro ao salvar a data. Veja o console.");
+              });
+          });
+        }
+      });
+    }
+
+    function renderVisaoGeral() {
+      const conteudo = document.getElementById("conteudoTurma");
+      let html = `
+        <h3>📋 Visão geral dos processos</h3>
+        <p style="font-size:0.8rem;color:#6b7280;margin-bottom:6px;">
+          Verde = feito (manual) • Laranja = em breve (até 14 dias) • Vermelho = atrasado • Branco = neutro.
         </p>
-        <div class="processos-grid">
-          ${criarCardProcesso("grupo_whats", "Grupos de WhatsApp + manual", turmaSelecionada.grupoWhats)}
-          ${criarCardProcesso("alinhamento_pais", "Alinhamento com os pais", turmaSelecionada.alinhamentoPais)}
-          ${criarCardProcesso("audio_feedback", "Áudio de feedback + conteúdos", turmaSelecionada.audioFeedback)}
-          ${criarCardProcesso("videos_alunos", "Vídeos dos alunos", turmaSelecionada.videosAlunos)}
-          ${criarCardProcesso("rematricula1", "1ª mensagem de rematrícula", turmaSelecionada.rematricula1)}
-          ${criarCardProcesso("mensagem_tcc", "Mensagem sobre o TCC", turmaSelecionada.mensagemTCC)}
-          ${criarCardProcesso("bombom_cartao", "Bombom com cartão", turmaSelecionada.bombomCartao)}
-          ${criarCardProcesso("data_tcc", "Data da apresentação do TCC", turmaSelecionada.dataTCC)}
+        <div style="overflow-x:auto;">
+          <table class="tabela-visao-geral">
+            <thead>
+              <tr>
+                <th>Turma</th>`;
+
+      processosDef.forEach(p => { html += `<th>${escapeHTML(p.titulo)}</th>`; });
+      html += `</tr></thead><tbody>`;
+
+      turmas.forEach(turma => {
+        html += `<tr><td class="col-turma">${escapeHTML(turma.nome)}</td>`;
+        processosDef.forEach(p => {
+          const status = getStatusFinal(turma, p.id);
+          const valor  = turma[p.campoData] || "-";
+          // ✅ FIX: adiciona datasets pra edição funcionar
+          html += `<td class="cel-processo status-${status}" data-turma="${escapeHTML(turma.id)}" data-proc="${escapeHTML(p.id)}">${escapeHTML(valor)}</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      conteudo.innerHTML = html;
+      inicializarEdicaoVisaoGeral();
+    }
+
+    function inicializarEdicaoVisaoGeral() {
+      const celulas = document.querySelectorAll(".cel-processo");
+
+      celulas.forEach(td => {
+        td.addEventListener("dblclick", async (ev) => {
+          ev.stopPropagation();
+
+          const turmaId = td.dataset.turma;
+          const procId  = td.dataset.proc;
+          if (!turmaId || !procId) return;
+
+          const turmaObj = turmas.find(t => t.id === turmaId);
+          if (!turmaObj) return;
+
+          const def = processosDef.find(p => p.id === procId);
+          if (!def) return;
+
+          const campo = def.campoData;
+          const valorAtual = turmaObj[campo] || "";
+
+          const novoValor = prompt("Digite a nova data (dd/mm/aaaa ou yyyy-mm-dd) ou deixe vazio:", valorAtual);
+          if (novoValor === null) return;
+
+          const novoRaw = novoValor.trim();
+          let novo = "";
+          if (novoRaw !== "") {
+            const d = parseDateBRorISO(novoRaw);
+            if (!d) { alert("Data inválida."); return; }
+            novo = isoToBR(dateToISO(d));
+          }
+
+          try {
+            const campoRef = ref(db, `turmas/${turmaId}/${campo}`);
+            await set(campoRef, novo);
+
+            turmaObj[campo] = novo;
+
+            // remove override manual se não for "feito"
+            const reg = statusProcessosFirebase?.[turmaId]?.[procId];
+            if (reg?.manual && reg.status !== "feito") {
+              const overrideRef = ref(db, `processos/${turmaId}/${procId}`);
+              await remove(overrideRef).catch(() => {});
+            }
+
+            const novoStatus = getStatusFinal(turmaObj, procId);
+
+            td.textContent = novo || "-";
+            cicloStatusProcesso.forEach(s => td.classList.remove("status-" + s));
+            td.classList.add("status-" + novoStatus);
+
+          } catch (err) {
+            console.error("Erro ao atualizar data:", err);
+            alert("Erro ao salvar a data. Veja o console.");
+          }
+        });
+      });
+    }
+
+    function renderQuadroHorarios() {
+      const conteudo = document.getElementById("conteudoTurma");
+      const diasOrdem = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+      const turmasAtivas = turmas.filter(t => {
+        if (t.status === "Em andamento") return true;
+        if (mostrarFormacaoNoHorario && t.status === "Em formação") return true;
+        return false;
+      });
+
+      const minutosUnicos = Array.from(new Set(
+        turmasAtivas
+          .map(t => extrairMinutosHorario(t.horario))
+          .filter(v => v !== null)
+      )).sort((a, b) => a - b);
+
+      const legenda = `
+        <span class="badge badge-status-andamento">Em andamento</span>
+        <span class="badge badge-status-formacao">Em formação</span>
+      `;
+
+      let html = `
+        <h3>🗓️ Quadro de horários</h3>
+
+        <div class="schedule-controls">
+          <div class="left">
+            <label class="chk">
+              <input type="checkbox" ${mostrarFormacaoNoHorario ? "checked" : ""} onchange="toggleFormacaoHorario(this.checked)">
+              Mostrar turmas <strong>Em formação</strong>
+            </label>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            ${legenda}
+            <span style="font-size:0.78rem; color:#6b7280;">
+              (clique numa turma para abrir no painel)
+            </span>
+          </div>
         </div>
       `;
-      inicializarProcessosClicaveis();
-    }
-  };
 
-  function criarCardProcesso(idProc, titulo, subtitulo) {
-    return `
-      <div class="processo-card status-neutro" data-status="neutro"
-           data-key="${turmaSelecionada.id}::${idProc}">
-        <div class="processo-titulo">${titulo}</div>
-        <div class="processo-sub">${subtitulo || "-"}</div>
-        <div class="processo-status-label">Status: Neutro</div>
-      </div>`;
-  }
-
-  function aplicarEstadoNoCard(card, estado) {
-    if (!cicloStatusProcesso.includes(estado)) estado = "neutro";
-    card.dataset.status = estado;
-    cicloStatusProcesso.forEach(s => card.classList.remove("status-" + s));
-    card.classList.add("status-" + estado);
-
-    const label = card.querySelector(".processo-status-label");
-    if (label) label.textContent = "Status: " + statusLabelMap[estado];
-  }
-
-  function inicializarProcessosClicaveis() {
-  const cards = document.querySelectorAll(".processo-card");
-
-  cards.forEach(card => {
-    const [turmaId, procId] = card.dataset.key.split("::");
-    const turmaObj = turmas.find(t => t.id === turmaId);
-    const estadoInicial = getStatusFinal(turmaObj, procId);
-    aplicarEstadoNoCard(card, estadoInicial);
-
-    const caminhoRef = ref(db, `processos/${turmaId}/${procId}`);
-
-    // 👉 clique no card inteiro = mudar STATUS (neutro → em breve → atrasado → feito)
-    card.addEventListener("click", () => {
-      let atual = card.dataset.status || "neutro";
-      let i = cicloStatusProcesso.indexOf(atual);
-      let proximo = cicloStatusProcesso[(i + 1) % cicloStatusProcesso.length];
-
-      aplicarEstadoNoCard(card, proximo);
-      // grava como manual
-      set(caminhoRef, { status: proximo, manual: true });
-    });
-
-    // 👉 clique NA DATA (subtítulo) = editar data do processo
-    const subEl = card.querySelector(".processo-sub");
-    if (subEl) {
-      subEl.style.textDecoration = "underline";
-      subEl.style.cursor = "pointer";
-      subEl.title = "Clique para editar a data";
-
-      subEl.addEventListener("click", (ev) => {
-        // não deixa o clique na data disparar o clique do card (que mudaria o status)
-        ev.stopPropagation();
-
-        const def = processosDef.find(p => p.id === procId);
-        if (!def) return;
-        const campo = def.campoData; // ex: "grupoWhats", "audioFeedback" etc.
-
-        const valorAtual = turmaObj[campo] || "";
-        const novoValor = prompt(
-          "Digite a data no formato dd/mm/aaaa (ou deixe vazio para limpar):",
-          valorAtual
-        );
-        if (novoValor === null) return; // cancelou
-
-        const novo = novoValor.trim();
-
-        const turmaCampoRef = ref(db, `turmas/${turmaId}/${campo}`);
-        set(turmaCampoRef, novo)
-          .then(() => {
-            // atualiza em memória
-            turmaObj[campo] = novo;
-            subEl.textContent = novo || "-";
-
-            // recalcula o status automático (se não tiver override manual de "feito")
-            const novoStatus = getStatusFinal(turmaObj, procId);
-            aplicarEstadoNoCard(card, novoStatus);
-          })
-          .catch(err => {
-            console.error("Erro ao atualizar data do processo:", err);
-            alert("Erro ao salvar a data. Veja o console para detalhes.");
-          });
-      });
-    }
-  });
-}
-
-
-  function renderVisaoGeral() {
-    const conteudo = document.getElementById("conteudoTurma");
-    let html = `
-      <h3>📋 Visão geral dos processos</h3>
-      <p style="font-size:0.8rem;color:#6b7280;margin-bottom:6px;">
-        Verde = feito (manual) • Laranja = em breve (até 14 dias) • Vermelho = atrasado • Branco = neutro.
-      </p>
-      <div style="overflow-x:auto;">
-        <table class="tabela-visao-geral">
-          <thead>
-            <tr>
-              <th>Turma</th>`;
-
-    processosDef.forEach(p => {
-      html += `<th>${p.titulo}</th>`;
-    });
-
-    html += `</tr></thead><tbody>`;
-
-    turmas.forEach(turma => {
-      html += `<tr><td class="col-turma">${turma.nome}</td>`;
-      processosDef.forEach(p => {
-        const status = getStatusFinal(turma, p.id);
-        const valor  = turma[p.campoData] || "-";
-        html += `<td class="cel-processo status-${status}">${valor}</td>`;
-      });
-      html += `</tr>`;
-    });
-
-    html += `</tbody></table></div>`;
-    conteudo.innerHTML = html;
-  }
-  function renderQuadroHorarios() {
-  const conteudo = document.getElementById("conteudoTurma");
-
-  const diasOrdem = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-
-  // só “Em andamento” e (opcionalmente) “Em formação”
-  const turmasAtivas = turmas.filter(t => {
-    if (t.status === "Em andamento") return true;
-    if (mostrarFormacaoNoHorario && t.status === "Em formação") return true;
-    return false;
-  });
-
-  // horários únicos (minutos)
-  const minutosUnicos = Array.from(new Set(
-    turmasAtivas
-      .map(t => extrairMinutosHorario(t.horario))
-      .filter(v => v !== null)
-  )).sort((a, b) => a - b);
-
-  const legenda = `
-    <span class="badge badge-status-andamento">Em andamento</span>
-    <span class="badge badge-status-formacao">Em formação</span>
-  `;
-
-  let html = `
-    <h3>🗓️ Quadro de horários</h3>
-
-    <div class="schedule-controls">
-      <div class="left">
-        <label class="chk">
-          <input type="checkbox" ${mostrarFormacaoNoHorario ? "checked" : ""} onchange="toggleFormacaoHorario(this.checked)">
-          Mostrar turmas <strong>Em formação</strong>
-        </label>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        ${legenda}
-        <span style="font-size:0.78rem; color:#6b7280;">
-          (clique numa turma para abrir no painel)
-        </span>
-      </div>
-    </div>
-  `;
-
-  if (minutosUnicos.length === 0) {
-    html += `<div style="color:#6b7280; font-size:0.9rem;">Nenhuma turma “Em andamento” (ou “Em formação”, se marcado) com horário válido.</div>`;
-    conteudo.innerHTML = html;
-    return;
-  }
-
-  html += `<div class="schedule-wrap"><table class="schedule-table"><thead><tr>
-    <th class="col-hora">Horário</th>`;
-
-  diasOrdem.forEach(d => { html += `<th>${d}</th>`; });
-
-  html += `</tr></thead><tbody>`;
-
-  minutosUnicos.forEach(min => {
-    const horaLabel = formatarHora(min);
-    html += `<tr><td class="col-hora">${horaLabel}</td>`;
-
-    diasOrdem.forEach(dia => {
-      const lista = turmasAtivas.filter(t => {
-        if (t.dia !== dia) return false;
-        const tm = extrairMinutosHorario(t.horario);
-        return tm === min;
-      });
-
-      if (lista.length === 0) {
-        html += `<td><div class="slot-cell" style="color:#9ca3af;">—</div></td>`;
-      } else {
-        html += `<td><div class="slot-cell">`;
-        lista.forEach(t => {
-          const classeStatus = (t.status === "Em andamento") ? "slot-andamento" : "slot-formacao";
-          html += `
-            <div class="slot-card ${classeStatus}" onclick="abrirTurmaDoHorario('${t.id}')">
-              <div>${criarBadgeStatus(t.status)} ${criarBadgeNivel(t.nivel)}</div>
-              <div class="slot-title">${t.nome}</div>
-              <div class="slot-sub">${t.dia} • ${t.horario} • Alunos: ${t.alunos || "-"}</div>
-            </div>
-          `;
-        });
-        html += `</div></td>`;
+      if (minutosUnicos.length === 0) {
+        html += `<div style="color:#6b7280; font-size:0.9rem;">Nenhuma turma “Em andamento” (ou “Em formação”, se marcado) com horário válido.</div>`;
+        conteudo.innerHTML = html;
+        return;
       }
-    });
 
-    html += `</tr>`;
-  });
+      html += `<div class="schedule-wrap"><table class="schedule-table"><thead><tr>
+        <th class="col-hora">Horário</th>`;
 
-  html += `</tbody></table></div>`;
-  conteudo.innerHTML = html;
-}
+      diasOrdem.forEach(d => { html += `<th>${escapeHTML(d)}</th>`; });
+      html += `</tr></thead><tbody>`;
 
-window.toggleFormacaoHorario = function(checked) {
-  mostrarFormacaoNoHorario = !!checked;
-  if (modoPainel === "schedule") renderQuadroHorarios();
-};
+      minutosUnicos.forEach(min => {
+        const horaLabel = formatarHora(min);
+        html += `<tr><td class="col-hora">${escapeHTML(horaLabel)}</td>`;
 
-window.abrirTurmaDoHorario = function(id) {
-  // muda pro modo turma e seleciona
-  setModoPainel("turma");
-  selecionarTurma(id);
-};
+        diasOrdem.forEach(dia => {
+          const lista = turmasAtivas.filter(t => {
+            if (t.dia !== dia) return false;
+            const tm = extrairMinutosHorario(t.horario);
+            return tm === min;
+          });
 
-  // inicial
-  setModoPainel("turma");
-</script>
+          if (lista.length === 0) {
+            html += `<td><div class="slot-cell" style="color:#9ca3af;">—</div></td>`;
+          } else {
+            html += `<td><div class="slot-cell">`;
+            lista.forEach(t => {
+              const classeStatus = (t.status === "Em andamento") ? "slot-andamento" : "slot-formacao";
+              html += `
+                <div class="slot-card ${classeStatus}" onclick="abrirTurmaDoHorario('${escapeHTML(t.id)}')">
+                  <div>${criarBadgeStatus(t.status)} ${criarBadgeNivel(t.nivel)}</div>
+                  <div class="slot-title">${escapeHTML(t.nome)}</div>
+                  <div class="slot-sub">${escapeHTML(t.dia)} • ${escapeHTML(t.horario)} • Alunos: ${escapeHTML(t.alunos ?? "-")}</div>
+                </div>
+              `;
+            });
+            html += `</div></td>`;
+          }
+        });
+
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      conteudo.innerHTML = html;
+    }
+
+    window.toggleFormacaoHorario = function(checked) {
+      mostrarFormacaoNoHorario = !!checked;
+      if (modoPainel === "schedule") renderQuadroHorarios();
+    };
+
+    window.abrirTurmaDoHorario = function(id) {
+      window.setModoPainel("turma");
+      selecionarTurma(id);
+    };
+
+    // ===== Inicializa =====
+    window.setModoPainel("turma");
+  </script>
 
   <!-- FORMULÁRIO DE CRIAÇÃO DE NOVA TURMA -->
-<div id="novaTurmaContainer"
-     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:50; align-items:center; justify-content:center;">
-  <div style="background:#fff; border-radius:12px; padding:16px; width:100%; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
-    <h3 style="margin-top:0; margin-bottom:8px;">Nova turma</h3>
-    <p style="font-size:0.8rem; color:#6b7280; margin-top:0;">
-      Preencha os dados básicos da turma. Você define o ID (por exemplo: 6761, 7117...).
-    </p>
+  <div id="novaTurmaContainer"
+       style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:50; align-items:center; justify-content:center;">
+    <div style="background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:16px; width:100%; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
+      <h3 style="margin-top:0; margin-bottom:8px;">Nova turma</h3>
+      <p style="font-size:0.8rem; color:#6b7280; margin-top:0;">
+        Preencha os dados básicos da turma. Você define o ID (por exemplo: 6761, 7117...).
+      </p>
 
-    <div style="display:flex; flex-direction:column; gap:6px; font-size:0.85rem;">
-      <label>
-        ID da turma
-        <input id="novaTurmaId" type="text"
-               style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-      </label>
+      <div style="display:flex; flex-direction:column; gap:6px; font-size:0.85rem;">
+        <label>
+          ID da turma
+          <input id="novaTurmaId" type="text"
+                 style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+        </label>
 
-      <label>
-        Nome da turma
-        <input id="novaTurmaNome" type="text"
-               placeholder="Ex: Teens 1 - Quinta - 18:30 às 20:30"
-               style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-      </label>
+        <label>
+          Nome da turma
+          <input id="novaTurmaNome" type="text"
+                 placeholder="Ex: Teens 1 - Quinta - 18:30 às 20:30"
+                 style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+        </label>
 
-      <label>
-        Nível
-        <select id="novaTurmaNivel"
-                style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-          <option value="Kids">Kids</option>
-          <option value="Teens">Teens</option>
-          <option value="Young">Young</option>
-        </select>
-      </label>
+        <label>
+          Nível
+          <select id="novaTurmaNivel"
+                  style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+            <option value="Kids">Kids</option>
+            <option value="Teens">Teens</option>
+            <option value="Young">Young</option>
+          </select>
+        </label>
 
-      <label>
-        Dia
-        <select id="novaTurmaDia"
-                style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-          <option value="Segunda">Segunda</option>
-          <option value="Terça">Terça</option>
-          <option value="Quarta">Quarta</option>
-          <option value="Quinta">Quinta</option>
-          <option value="Sexta">Sexta</option>
-          <option value="Sábado">Sábado</option>
-        </select>
-      </label>
+        <label>
+          Dia
+          <select id="novaTurmaDia"
+                  style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+            <option value="Segunda">Segunda</option>
+            <option value="Terça">Terça</option>
+            <option value="Quarta">Quarta</option>
+            <option value="Quinta">Quinta</option>
+            <option value="Sexta">Sexta</option>
+            <option value="Sábado">Sábado</option>
+          </select>
+        </label>
 
-      <label>
-        Horário (início)
-        <input id="novaTurmaHorario" type="text"
-               placeholder="Ex: 18:30"
-               style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-      </label>
+        <label>
+          Horário (início)
+          <input id="novaTurmaHorario" type="text"
+                 placeholder="Ex: 18:30"
+                 style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+        </label>
 
-      <label>
-        Status
-        <select id="novaTurmaStatus"
-                style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-          <option value="Em andamento">Em andamento</option>
-          <option value="Em formação">Em formação</option>
-          <option value="Encerrada">Encerrada</option>
-        </select>
-      </label>
+        <label>
+          Status
+          <select id="novaTurmaStatus"
+                  style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+            <option value="Em andamento">Em andamento</option>
+            <option value="Em formação">Em formação</option>
+            <option value="Encerrada">Encerrada</option>
+          </select>
+        </label>
 
-      <label>
-        Nº de alunos (opcional)
-        <input id="novaTurmaAlunos" type="number" min="0"
-               style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-      </label>
+        <label>
+          Nº de alunos (opcional)
+          <input id="novaTurmaAlunos" type="number" min="0"
+                 style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+        </label>
 
-      <label>
-        Data de início (opcional)
-        <input id="novaTurmaDataInicio" type="text" placeholder="dd/mm/aaaa"
-               style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-      </label>
+        <label>
+          Data de início (Obrigatória)
+          <input id="novaTurmaDataInicio" type="text" placeholder="dd/mm/aaaa" required
+                 style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+        </label>
 
-      <label>
-        Data de término (opcional)
-        <input id="novaTurmaDataFim" type="text" placeholder="dd/mm/aaaa"
-               style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
-      </label>
-    </div>
+        <label>
+          Data de término (opcional)
+          <input id="novaTurmaDataFim" type="text" placeholder="dd/mm/aaaa"
+                 style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+        </label>
+      </div>
 
-    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
-      <button class="btn btn-secundario" type="button" onclick="fecharFormularioNovaTurma()">
-        Cancelar
-      </button>
-      <button class="btn btn-primario" type="button" onclick="salvarNovaTurma()">
-        Salvar turma
-      </button>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+        <button class="btn btn-secundario" type="button" onclick="fecharFormularioNovaTurma()">
+          Cancelar
+        </button>
+        <button class="btn btn-primario" type="button" onclick="salvarNovaTurma()">
+          Salvar turma
+        </button>
+      </div>
     </div>
   </div>
-</div>
-
 </body>
-
 </html>
