@@ -10,8 +10,101 @@
   * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 
   /* =========================
+     SCHEDULE GRID (altura proporcional por duração)
+     ========================= */
+
+  /* ===== SCHEDULE GRID WRAP ===== */
+  .schedule-grid-wrap{
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+  }
+
+  /* ===== GRID ===== */
+  .schedule-grid{
+    display:grid;
+    grid-template-columns: 92px repeat(6, minmax(210px, 1fr));
+    grid-template-rows: 44px;   /* ✅ header */
+    grid-auto-rows: 44px;       /* ✅ cada slot = 44px */
+    gap: 0;
+    min-width: 1100px;
+    position: relative;
+  }
+
+  /* header */
+  .sg-head{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--thead);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 8px;
+    font-weight: 700;
+    height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .sg-head.time{
+    position: sticky;
+    left: 0;
+    z-index: 30;
+    background: var(--thead);
+    border-right: 1px solid var(--border);
+  }
+
+  /* coluna de horário */
+  .sg-time{
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: var(--col-bg);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+    height: 44px;
+    display:flex;
+    align-items:center;
+  }
+
+  /* slots vazios */
+  .sg-cell{
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-height: 44px;
+    background: transparent;
+    z-index: 1;
+  }
+
+  /* overlay do dia (onde entram os cards) */
+  .sg-day-layer{
+    position: relative;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* card */
+  .sg-class{
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    padding: 10px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.12s ease;
+  }
+  .sg-class:hover{ transform: translateY(-1px); }
+
+  /* =========================
      THEME TOKENS (light/dark)
      ========================= */
+  .badge-sala-7 { background:#0ea5e9; } /* azul */
+  .badge-sala-h { background:#22c55e; } /* verde */
+
   :root{
     --bg: #f4f4f8;
     --text: #222;
@@ -40,9 +133,6 @@
     --thead: #f3f4f6;
     --col-bg: #f9fafb;
   }
-  .badge-sala-7 { background:#0ea5e9; } /* azul */
-  .badge-sala-h { background:#22c55e; } /* verde */
-
 
   html[data-theme="dark"]{
     --bg: #0b1220;
@@ -92,7 +182,6 @@
     color: var(--text) !important;
   }
 
-  /* ✅ dropdown options no dark */
   html[data-theme="dark"] .filtro-select option{
     background: var(--panel) !important;
     color: var(--text) !important;
@@ -155,7 +244,6 @@
   .btn-secundario { background: var(--tab-bg); color: var(--tab-text); }
   .btn:hover { filter: brightness(0.95); transform: translateY(-0.5px); }
 
-  /* (opcional) botão de perigo usado no card */
   .btn-perigo { background:#dc2626; color:#fff; }
   .btn-perigo:hover { filter: brightness(0.95); }
 
@@ -180,7 +268,7 @@
   .processo-sub { font-size: 0.8rem; color: var(--muted2); margin-bottom: 4px; }
   .processo-status-label { font-size: 0.8rem; font-weight: 500; }
 
-  /* status (mantive suas cores originais) */
+  /* status */
   .status-neutro { background: #ffffff; color: #111827; }
   .status-embreve { background: #fef3c7; color: #7c2d12; }
   .status-atrasado { background: #fee2e2; color: #7f1d1d; }
@@ -206,7 +294,6 @@
     color: var(--text);
   }
 
-  /* coluna Turma no dark */
   .col-turma {
     text-align: left;
     white-space: nowrap;
@@ -219,9 +306,11 @@
     text-align: center;
     min-width: 90px;
     color: var(--text);
+    cursor: pointer;
+    user-select: none;
   }
 
-  /* ===== QUADRO DE HORÁRIOS ===== */
+  /* ===== QUADRO DE HORÁRIOS (controle) ===== */
   .schedule-controls {
     display: flex;
     flex-wrap: wrap;
@@ -254,69 +343,6 @@
 
   .chk input { transform: translateY(1px); }
 
-  .schedule-wrap {
-    overflow: auto;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-  }
-
-  .schedule-table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 820px;
-    font-size: 0.82rem;
-    background: var(--panel);
-    color: var(--text);
-  }
-
-  .schedule-table th,
-  .schedule-table td {
-    border: 1px solid var(--border);
-    padding: 8px;
-    vertical-align: top;
-  }
-
-  .schedule-table thead th {
-    background: var(--thead);
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .schedule-table .col-hora {
-    background: var(--col-bg);
-    position: sticky;
-    left: 0;
-    z-index: 3;
-    font-weight: 700;
-    white-space: nowrap;
-    width: 92px;
-    color: var(--text);
-  }
-
-  .slot-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-height: 46px;
-  }
-
-  .slot-card {
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    padding: 8px 10px;
-    background: var(--card);
-    cursor: pointer;
-    transition: 0.12s ease;
-  }
-
-  .slot-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  }
-
   .slot-title {
     font-weight: 700;
     line-height: 1.15;
@@ -334,10 +360,6 @@
   .slot-formacao  { border-left: 6px solid #eab308; }
 
   @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-
-  /* =========================
-     DARK: melhorar leitura das datas (status cells)
-     ========================= */
 
   html[data-theme="dark"] .status-neutro{
     background: rgba(255,255,255,0.04) !important;
@@ -358,7 +380,28 @@
   html[data-theme="dark"] .tabela-visao-geral td{
     color: #e5e7eb;
   }
-  </style>
+  /* =========================
+   FULLSCREEN no modo schedule
+   ========================= */
+  .layout.modo-schedule{
+    grid-template-columns: 1fr !important;   /* painel ocupa tudo */
+  }
+
+  .layout.modo-schedule .turma-lista{
+    display: none !important;               /* some com a lista da esquerda */
+  }
+
+  .layout.modo-schedule .painel{
+    min-height: calc(100vh - 120px);        /* opcional: mais alto */
+  }
+
+  /* (opcional) dá uma “esticada” geral no wrap do quadro */
+  .layout.modo-schedule #conteudoTurma{
+    margin-top: 6px;
+  }
+
+</style>
+
 </head>
 
 <body>
@@ -548,7 +591,6 @@
       const date = new Date(y, mo, d);
       if (isNaN(date.getTime())) return null;
       date.setHours(0, 0, 0, 0);
-      // garante que o JS não “corrigiu” (ex 32/01 vira 01/02)
       if (date.getFullYear() !== y || date.getMonth() !== mo || date.getDate() !== d) return null;
       return date;
     }
@@ -562,7 +604,7 @@
         "Sexta": 5,
         "Sábado": 6, "Sabado": 6
       };
-      return map[dia] ?? null; // JS: 0=Dom ... 6=Sáb
+      return map[dia] ?? null;
     }
 
     function nextWeekdayOnOrAfter(d, targetJsWeekday) {
@@ -654,13 +696,38 @@
       ["2026-10-12","2026-10-15"],
     ];
 
-    function extrairMinutosHorario(horarioStr) {
-      const m = String(horarioStr || "").match(/(\d{1,2}):(\d{2})/);
+    // ===== horário (robusto) =====
+    function extrairMinutosHorario(valor) {
+      if (!valor) return null;
+      const s = String(valor);
+      const m = s.match(/(\d{1,2})\s*(?:[:h])\s*(\d{2})/i);
       if (!m) return null;
-      const hh = parseInt(m[1], 10);
-      const mm = parseInt(m[2], 10);
-      if (isNaN(hh) || isNaN(mm)) return null;
+
+      const hh = Number(m[1]);
+      const mm = Number(m[2]);
+      if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+      if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+
       return hh * 60 + mm;
+    }
+
+    function extrairIntervaloHorario(valor) {
+      if (!valor) return { start: null, end: null };
+      const s = String(valor);
+
+      const matches = [...s.matchAll(/(\d{1,2})\s*(?:[:h])\s*(\d{2})/gi)];
+      if (matches.length === 0) return { start: null, end: null };
+
+      const toMin = (mm) => {
+        const h = Number(mm[1]), m = Number(mm[2]);
+        if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+        if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+        return h * 60 + m;
+      };
+
+      const start = toMin(matches[0]);
+      const end = matches.length >= 2 ? toMin(matches[1]) : null;
+      return { start, end };
     }
 
     function formatarHora(min) {
@@ -669,13 +736,25 @@
       return `${hh}:${mm}`;
     }
 
-    const cicloStatusProcesso = ["neutro", "embreve", "atrasado", "feito"];
-    const statusLabelMap = { neutro:"Neutro", embreve:"Em breve", atrasado:"Atrasado", feito:"Feito" };
-    let statusProcessosFirebase = {};
-
     // ===== Validações =====
     function validarIdTurma(id) { return /^[0-9]{3,10}$/.test(id); }
     function validarHorario(h) { return /^([01]\d|2[0-3]):([0-5]\d)$/.test(String(h || "").trim()); }
+
+    function parseHHMMToMin(h){
+      const m = String(h || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+      if (!m) return null;
+      const hh = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      if (isNaN(hh) || isNaN(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+      return hh * 60 + mm;
+    }
+
+    function minToHHMM(min){
+      min = ((min % 1440) + 1440) % 1440;
+      const hh = String(Math.floor(min / 60)).padStart(2, "0");
+      const mm = String(min % 60).padStart(2, "0");
+      return `${hh}:${mm}`;
+    }
 
     // ===== CONFIG FIREBASE =====
     const firebaseConfig = {
@@ -689,6 +768,244 @@
     };
     const app  = initializeApp(firebaseConfig);
     const db   = getDatabase(app);
+
+    // ===== Definições de processos =====
+    const processosDef = [
+      { id: "grupo_whats",      titulo: "Grupos / Manual",       campoData: "grupoWhats" },
+      { id: "alinhamento_pais", titulo: "Alinhamento pais",      campoData: "alinhamentoPais" },
+      { id: "audio_feedback",   titulo: "Áudio + conteúdos",     campoData: "audioFeedback" },
+      { id: "videos_alunos",    titulo: "Vídeos alunos",         campoData: "videosAlunos" },
+      { id: "rematricula1",     titulo: "1ª rematrícula",        campoData: "rematricula1" },
+      { id: "mensagem_tcc",     titulo: "Mensagem TCC",          campoData: "mensagemTCC" },
+      { id: "bombom_cartao",    titulo: "Bombom c/ cartão",      campoData: "bombomCartao" },
+      { id: "data_tcc",         titulo: "TCC",                   campoData: "dataTCC" }
+    ];
+
+    const cicloStatusProcesso = ["neutro", "embreve", "atrasado", "feito"];
+    const statusLabelMap = { neutro:"Neutro", embreve:"Em breve", atrasado:"Atrasado", feito:"Feito" };
+    let statusProcessosFirebase = {};
+
+    // ===== badges =====
+    function criarBadgeStatus(status) {
+      const classe =
+        status === "Em andamento" ? "badge-status-andamento" :
+        status === "Em formação" ? "badge-status-formacao" :
+        "badge-status-encerrada";
+      return `<span class="badge ${classe}">${escapeHTML(status)}</span>`;
+    }
+    function criarBadgeSala(sala) {
+      const s = String(sala || "").trim().toUpperCase();
+      const val = (s === "7" || s === "H") ? s : "7"; // fallback (antigas)
+      // simples:
+      // return `<span class="badge badge-sala">Sala ${escapeHTML(val)}</span>`;
+
+      // compacto (como você pediu: só 7 ou H)
+      const cls = (val === "7") ? "badge-sala-7" : "badge-sala-h";
+      return `<span class="badge ${cls}">${escapeHTML(val)}</span>`;
+    }
+
+
+    function criarBadgeNivel(nivel) {
+      const n = (nivel || "").toLowerCase();
+      let classe = "badge-kids";
+      if (n === "teens") classe = "badge-teens";
+      if (n === "young") classe = "badge-young";
+      return `<span class="badge ${classe}">${escapeHTML(nivel)}</span>`;
+    }
+
+    function calcularStatusAutomatico(turma, procId) {
+      const def = processosDef.find(p => p.id === procId);
+      if (!def) return "neutro";
+
+      const valor = turma[def.campoData];
+      const dataProc = parseDataBR(valor);
+      if (!dataProc) return "neutro";
+
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const diffDias = Math.round((dataProc - hoje) / (1000 * 60 * 60 * 24));
+
+      if (diffDias < 0)  return "atrasado";
+      if (diffDias <= 14) return "embreve";
+      return "neutro";
+    }
+
+    function getStatusFinal(turma, procId) {
+      const tInfo = statusProcessosFirebase[turma.id];
+      const reg   = tInfo && tInfo[procId];
+
+      if (reg && (reg.manual || reg.status === "feito")) {
+        return reg.status || "neutro";
+      }
+      return calcularStatusAutomatico(turma, procId);
+    }
+
+    // ===== quadro de horários (corrigido) =====
+    function renderQuadroHorarios() {
+      const conteudo = document.getElementById("conteudoTurma");
+      const diasOrdem = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+      const turmasAtivas = turmas.filter(t => {
+        if (t.status === "Em andamento") return true;
+        if (mostrarFormacaoNoHorario && t.status === "Em formação") return true;
+        return false;
+      });
+
+      let html = `
+        <h3>🗓️ Quadro de horários</h3>
+
+        <div class="schedule-controls">
+          <div class="left">
+            <label class="chk">
+              <input type="checkbox" ${mostrarFormacaoNoHorario ? "checked" : ""} onchange="toggleFormacaoHorario(this.checked)">
+              Mostrar turmas <strong>Em formação</strong>
+            </label>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span class="badge badge-status-andamento">Em andamento</span>
+            <span class="badge badge-status-formacao">Em formação</span>
+            <span style="font-size:0.78rem; color:var(--muted2);">(clique numa turma para abrir no painel)</span>
+          </div>
+        </div>
+      `;
+
+      const SLOT = 30;
+
+      const getStartMin = (t) => {
+        let s = extrairMinutosHorario(t.horario);
+        if (s !== null) return s;
+        const inter = extrairIntervaloHorario(t.horario);
+        return inter.start;
+      };
+
+      const getEndMin = (t) => {
+        const start = getStartMin(t);
+        if (start === null) return null;
+
+        const end = extrairMinutosHorario(t.horarioFim);
+        if (end !== null) return end;
+
+        const dur = Number(t.duracaoMin);
+        if (Number.isFinite(dur) && dur > 0) return start + dur;
+
+        return start + 120; // turmas antigas
+      };
+
+      const starts = turmasAtivas.map(getStartMin).filter(v => v !== null);
+      const ends   = turmasAtivas.map(getEndMin).filter(v => v !== null);
+
+      if (starts.length === 0 || ends.length === 0) {
+        html += `<div style="color:var(--muted2); font-size:0.9rem;">Nenhuma turma com horário válido.</div>`;
+        conteudo.innerHTML = html;
+        return;
+      }
+
+      const minStart = Math.floor(Math.min(...starts) / SLOT) * SLOT;
+
+      // ✅ +1 SLOT no fim (o “quadrado extra” que você pediu)
+      const maxEnd = Math.ceil(Math.max(...ends) / SLOT) * SLOT + SLOT;
+
+      const slotsCount = Math.max(1, (maxEnd - minStart) / SLOT);
+
+      // base grid
+      html += `<div class="schedule-grid-wrap"><div class="schedule-grid">`;
+
+      html += `<div class="sg-head time" style="grid-column:1;grid-row:1">Horário</div>`;
+      diasOrdem.forEach((d, idx) => {
+        html += `<div class="sg-head" style="grid-column:${2 + idx};grid-row:1">${d}</div>`;
+      });
+
+      for (let i = 0; i < slotsCount; i++) {
+        const tMin = minStart + i * SLOT;
+        const row = 2 + i;
+
+        html += `<div class="sg-time" style="grid-column:1;grid-row:${row}">${formatarHora(tMin)}</div>`;
+        for (let di = 0; di < 6; di++) {
+          html += `<div class="sg-cell" style="grid-column:${2 + di};grid-row:${row}"></div>`;
+        }
+      }
+
+      html += `</div></div>`;
+      conteudo.innerHTML = html;
+
+      const grid = conteudo.querySelector(".schedule-grid");
+
+      // layers
+      const layers = [];
+      for (let di = 0; di < diasOrdem.length; di++) {
+        const layer = document.createElement("div");
+        layer.className = "sg-day-layer";
+        layer.style.gridColumn = String(2 + di);
+        layer.style.gridRow = `2 / span ${slotsCount}`;
+        layer.style.pointerEvents = "none";
+
+        layer.style.display = "grid";
+        layer.style.gridTemplateRows = `repeat(${slotsCount}, 44px)`;
+        layer.style.alignItems = "stretch";
+
+        grid.appendChild(layer);
+        layers.push(layer);
+      }
+
+      // cards
+      turmasAtivas.forEach(t => {
+        const di = diasOrdem.indexOf(t.dia);
+        if (di < 0) return;
+
+        const start = getStartMin(t);
+        let end = getEndMin(t);
+        if (start === null) return;
+        if (end === null) end = start + 120;
+
+        // ✅ exibição do fim (resolve o crash!)
+        const fimParaExibir = t.horarioFim || formatarHora(end);
+
+        // regra: 15:40 -> 15:30
+        const startRounded = Math.floor(start / SLOT) * SLOT;
+
+        // duração real
+        const durMin = Math.max(1, end - start);
+
+        // ✅ regra pedida: +1 quadrado
+        // 120min -> ceil(4)+1 = 5
+        // 90min  -> ceil(3)+1 = 4
+        let span = Math.max(1, Math.ceil(durMin / SLOT) + 1);
+
+        // posição
+        let startIdx = Math.floor((startRounded - minStart) / SLOT);
+
+        // corta se cair antes do range
+        const overflowTop = Math.max(0, -startIdx);
+        const safeStartIdx = Math.max(0, startIdx);
+        let safeSpan = Math.max(1, span - overflowTop);
+
+        // não ultrapassar fim do grid
+        safeSpan = Math.min(safeSpan, slotsCount - safeStartIdx);
+
+        const layer = layers[di];
+        if (!layer) return;
+
+        const classeStatus = (t.status === "Em andamento") ? "slot-andamento" : "slot-formacao";
+
+        const card = document.createElement("div");
+        card.className = `sg-class ${classeStatus}`;
+        card.style.gridRow = `${safeStartIdx + 1} / span ${safeSpan}`;
+        card.style.margin = "6px";
+        card.style.pointerEvents = "auto";
+        card.style.alignSelf = "stretch";
+
+        card.innerHTML = `
+          <div>${criarBadgeStatus(t.status)} ${criarBadgeNivel(t.nivel)} ${criarBadgeSala(t.sala)}</div>
+          <div class="slot-title">${escapeHTML(t.nome)}</div>
+          <div class="slot-sub">
+            ${escapeHTML(t.dia)} • ${escapeHTML(t.horario)} às ${escapeHTML(fimParaExibir)} • Alunos: ${escapeHTML(t.alunos ?? "-")}
+          </div>
+        `;
+
+        card.addEventListener("click", () => abrirTurmaDoHorario(t.id));
+        layer.appendChild(card);
+      });
+    }
 
     // ====== CRUD: excluir / modal nova turma ======
     window.excluirTurmaSelecionada = function (idTurma, ev) {
@@ -726,10 +1043,11 @@
       if (!modal) return;
 
       document.getElementById("novaTurmaId").value = "";
+      document.getElementById("novaTurmaDuracao").value = "120";
+      document.getElementById("novaTurmaSala").value = "7";
       document.getElementById("novaTurmaNome").value = "";
       document.getElementById("novaTurmaNivel").value = "Teens";
       document.getElementById("novaTurmaDia").value = "Sábado";
-      document.getElementById("novaTurmaSala").value = "7";
       document.getElementById("novaTurmaHorario").value = "";
       document.getElementById("novaTurmaStatus").value = "Em formação";
       document.getElementById("novaTurmaAlunos").value = "";
@@ -749,7 +1067,14 @@
       const modal = document.getElementById("novaTurmaContainer");
       if (!modal) return;
 
-      const id         = document.getElementById("novaTurmaId").value.trim();
+      const id = document.getElementById("novaTurmaId").value.trim();
+      const duracaoMin = parseInt(document.getElementById("novaTurmaDuracao").value, 10);
+
+      if (!Number.isFinite(duracaoMin) || duracaoMin <= 0) {
+        alert("Selecione a duração da aula (obrigatória).");
+        return;
+      }
+
       const nome       = document.getElementById("novaTurmaNome").value.trim();
       const nivel      = document.getElementById("novaTurmaNivel").value;
       const dia        = document.getElementById("novaTurmaDia").value;
@@ -760,7 +1085,6 @@
       const dataInicio = document.getElementById("novaTurmaDataInicio").value.trim();
       const dataFim    = document.getElementById("novaTurmaDataFim").value.trim();
 
-      // ✅ obrigatório
       if (!id || !nome || !horario || !dataInicio) {
         alert("Preencha: ID, nome, horário e data de início.");
         return;
@@ -774,7 +1098,13 @@
         return;
       }
 
-      // data início: aceita BR ou ISO, salva em BR
+      const iniMin = parseHHMMToMin(horario);
+      if (iniMin === null) {
+        alert("Horário inválido. Use HH:MM (ex: 18:30).");
+        return;
+      }
+      const horarioFim = minToHHMM(iniMin + duracaoMin);
+
       const dIni = parseDateBRorISO(dataInicio);
       if (!dIni) {
         alert("Data de início inválida. Use dd/mm/aaaa ou yyyy-mm-dd.");
@@ -782,7 +1112,6 @@
       }
       const dataInicioBR = isoToBR(dateToISO(dIni));
 
-      // data fim opcional: aceita BR ou ISO, salva em BR
       let dataFimBR = "";
       if (dataFim) {
         const dFim = parseDateBRorISO(dataFim);
@@ -806,6 +1135,8 @@
         nivel,
         dia,
         horario,
+        duracaoMin,
+        horarioFim,
         status,
         alunos: (alunosStr === "" || isNaN(alunos)) ? null : alunos,
 
@@ -828,10 +1159,9 @@
         dataTCC: ""
       };
 
-      // ===== AUTO: gerar calendário e preencher processos =====
       const total = 21;
       const { datesISO, skipped } = genValidClassDaysISO({
-        startDateStr: dataInicioBR, // BR ou ISO funcionaria, mas já está BR
+        startDateStr: dataInicioBR,
         diaSemanaPT: dia,
         count: total,
         excludedList: EXCLUSOES_PADRAO
@@ -893,7 +1223,6 @@
 
       let valorFinal;
       try {
-        // regra extra: dataInicio não pode ficar vazia
         if (campo === "dataInicio" && el.value.trim() === "") {
           alert("A data de início é obrigatória.");
           return;
@@ -1000,96 +1329,184 @@
       `;
     }
 
-    // ===== Definições de processos =====
-    const processosDef = [
-      { id: "grupo_whats",     titulo: "Grupos / Manual",       campoData: "grupoWhats" },
-      { id: "alinhamento_pais",titulo: "Alinhamento pais",      campoData: "alinhamentoPais" },
-      { id: "audio_feedback",  titulo: "Áudio + conteúdos",     campoData: "audioFeedback" },
-      { id: "videos_alunos",   titulo: "Vídeos alunos",         campoData: "videosAlunos" },
-      { id: "rematricula1",    titulo: "1ª rematrícula",        campoData: "rematricula1" },
-      { id: "mensagem_tcc",    titulo: "Mensagem TCC",          campoData: "mensagemTCC" },
-      { id: "bombom_cartao",   titulo: "Bombom c/ cartão",      campoData: "bombomCartao" },
-      { id: "data_tcc",        titulo: "TCC",                   campoData: "dataTCC" }
-    ];
+    // ====== Visão geral: edição em duplo clique (✅ FUNÇÃO QUE FALTAVA) ======
+    function inicializarEdicaoVisaoGeral() {
+      const celulas = document.querySelectorAll(".cel-processo");
+      celulas.forEach(td => {
+        td.addEventListener("dblclick", (ev) => {
+          ev.stopPropagation();
 
-    // ===== Leitura do Firebase =====
-    const turmasRef = ref(db, "turmas");
-    const processosRootRef = ref(db, "processos");
+          const turmaId = td.dataset.turma;
+          const procId  = td.dataset.proc;
 
-    onValue(turmasRef, (snap) => {
-      const data = snap.val() || {};
-      turmas = Object.entries(data).map(([id, dados]) => ({ id, ...dados }));
+          const turmaObj = turmas.find(t => t.id === turmaId);
+          if (!turmaObj) return;
 
-      if (turmaSelecionada) {
-        const encontrada = turmas.find(t => t.id === turmaSelecionada.id);
-        turmaSelecionada = encontrada || null;
-      }
+          const def = processosDef.find(p => p.id === procId);
+          if (!def) return;
 
-      preencherOpcoesHorario();
-      renderListaTurmas();
+          const campo = def.campoData;
+          const valorAtual = turmaObj[campo] || "";
 
-      if (modoPainel === "overview") renderVisaoGeral();
-      if (modoPainel === "schedule") renderQuadroHorarios();
-    });
+          const novoValor = prompt("Digite a nova data (dd/mm/aaaa ou yyyy-mm-dd) ou deixe vazio:", valorAtual);
+          if (novoValor === null) return;
 
-    onValue(processosRootRef, (snap) => {
-      statusProcessosFirebase = snap.val() || {};
-      if (modoPainel === "overview") renderVisaoGeral();
-    });
+          const novoRaw = novoValor.trim();
+          let novo = "";
 
-    // ===== badges =====
-    function criarBadgeStatus(status) {
-      const classe =
-        status === "Em andamento" ? "badge-status-andamento" :
-        status === "Em formação" ? "badge-status-formacao" :
-        "badge-status-encerrada";
-      return `<span class="badge ${classe}">${escapeHTML(status)}</span>`;
+          if (novoRaw !== "") {
+            const d = parseDateBRorISO(novoRaw);
+            if (!d) { alert("Data inválida."); return; }
+            novo = isoToBR(dateToISO(d));
+          }
+
+          const campoRef = ref(db, `turmas/${turmaId}/${campo}`);
+          set(campoRef, novo)
+            .then(() => {
+              turmaObj[campo] = novo;
+              td.textContent = novo || "-";
+
+              // se tinha override manual e não era feito, remove para voltar automático
+              const reg = statusProcessosFirebase?.[turmaId]?.[procId];
+              if (reg?.manual && reg.status !== "feito") {
+                const overrideRef = ref(db, `processos/${turmaId}/${procId}`);
+                remove(overrideRef).catch(() => {});
+              }
+
+              // recalcula classe (status automático ou manual)
+              const status = getStatusFinal(turmaObj, procId);
+              cicloStatusProcesso.forEach(s => td.classList.remove("status-" + s));
+              td.classList.add("status-" + status);
+            })
+            .catch(err => {
+              console.error("Erro ao editar data na visão geral:", err);
+              alert("Erro ao salvar. Veja o console.");
+            });
+        });
+      });
     }
 
-    function criarBadgeNivel(nivel) {
-      const n = (nivel || "").toLowerCase();
-      let classe = "badge-kids";
-      if (n === "teens") classe = "badge-teens";
-      if (n === "young") classe = "badge-young";
-      return `<span class="badge ${classe}">${escapeHTML(nivel)}</span>`;
-    }
-    function criarBadgeSala(sala) {
-      const s = String(sala || "").trim().toUpperCase();
-      const val = (s === "7" || s === "H") ? s : "7"; // fallback (antigas)
-      // simples:
-      // return `<span class="badge badge-sala">Sala ${escapeHTML(val)}</span>`;
-
-      // compacto (como você pediu: só 7 ou H)
-      const cls = (val === "7") ? "badge-sala-7" : "badge-sala-h";
-      return `<span class="badge ${cls}">${escapeHTML(val)}</span>`;
+    function criarCardProcesso(idProc, titulo, subtitulo) {
+      return `
+        <div class="processo-card status-neutro" data-status="neutro"
+             data-key="${escapeHTML(turmaSelecionada.id)}::${escapeHTML(idProc)}">
+          <div class="processo-titulo">${escapeHTML(titulo)}</div>
+          <div class="processo-sub">${escapeHTML(subtitulo || "-")}</div>
+          <div class="processo-status-label">Status: Neutro</div>
+        </div>`;
     }
 
+    function aplicarEstadoNoCard(card, estado) {
+      if (!cicloStatusProcesso.includes(estado)) estado = "neutro";
+      card.dataset.status = estado;
+      cicloStatusProcesso.forEach(s => card.classList.remove("status-" + s));
+      card.classList.add("status-" + estado);
 
-    function calcularStatusAutomatico(turma, procId) {
-      const def = processosDef.find(p => p.id === procId);
-      if (!def) return "neutro";
-
-      const valor = turma[def.campoData];
-      const dataProc = parseDataBR(valor);
-      if (!dataProc) return "neutro";
-
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-      const diffDias = Math.round((dataProc - hoje) / (1000 * 60 * 60 * 24));
-
-      if (diffDias < 0)  return "atrasado";
-      if (diffDias <= 14) return "embreve";
-      return "neutro";
+      const label = card.querySelector(".processo-status-label");
+      if (label) label.textContent = "Status: " + statusLabelMap[estado];
     }
 
-    function getStatusFinal(turma, procId) {
-      const tInfo = statusProcessosFirebase[turma.id];
-      const reg   = tInfo && tInfo[procId];
+    function inicializarProcessosClicaveis() {
+      const cards = document.querySelectorAll(".processo-card");
 
-      if (reg && (reg.manual || reg.status === "feito")) {
-        return reg.status || "neutro";
-      }
-      return calcularStatusAutomatico(turma, procId);
+      cards.forEach(card => {
+        const [turmaId, procId] = card.dataset.key.split("::");
+        const turmaObj = turmas.find(t => t.id === turmaId);
+        if (!turmaObj) return;
+
+        const estadoInicial = getStatusFinal(turmaObj, procId);
+        aplicarEstadoNoCard(card, estadoInicial);
+
+        const caminhoRef = ref(db, `processos/${turmaId}/${procId}`);
+
+        card.addEventListener("click", () => {
+          let atual = card.dataset.status || "neutro";
+          let i = cicloStatusProcesso.indexOf(atual);
+          let proximo = cicloStatusProcesso[(i + 1) % cicloStatusProcesso.length];
+
+          aplicarEstadoNoCard(card, proximo);
+          set(caminhoRef, { status: proximo, manual: true });
+        });
+
+        const subEl = card.querySelector(".processo-sub");
+        if (subEl) {
+          subEl.style.textDecoration = "underline";
+          subEl.style.cursor = "pointer";
+          subEl.title = "Clique para editar a data";
+
+          subEl.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+
+            const def = processosDef.find(p => p.id === procId);
+            if (!def) return;
+            const campo = def.campoData;
+
+            const valorAtual = turmaObj[campo] || "";
+            const novoValor = prompt("Digite a data (dd/mm/aaaa ou yyyy-mm-dd) ou deixe vazio:", valorAtual);
+            if (novoValor === null) return;
+
+            const novoRaw = novoValor.trim();
+            let novo = "";
+
+            if (novoRaw !== "") {
+              const d = parseDateBRorISO(novoRaw);
+              if (!d) { alert("Data inválida."); return; }
+              novo = isoToBR(dateToISO(d));
+            }
+
+            const turmaCampoRef = ref(db, `turmas/${turmaId}/${campo}`);
+            set(turmaCampoRef, novo)
+              .then(() => {
+                turmaObj[campo] = novo;
+                subEl.textContent = novo || "-";
+
+                const reg = statusProcessosFirebase?.[turmaId]?.[procId];
+                if (reg?.manual && reg.status !== "feito") {
+                  const overrideRef = ref(db, `processos/${turmaId}/${procId}`);
+                  remove(overrideRef).catch(() => {});
+                }
+
+                const novoStatus = getStatusFinal(turmaObj, procId);
+                aplicarEstadoNoCard(card, novoStatus);
+              })
+              .catch(err => {
+                console.error("Erro ao atualizar data do processo:", err);
+                alert("Erro ao salvar a data. Veja o console.");
+              });
+          });
+        }
+      });
+    }
+
+    function renderVisaoGeral() {
+      const conteudo = document.getElementById("conteudoTurma");
+      let html = `
+        <h3>📋 Visão geral dos processos</h3>
+        <p style="font-size:0.8rem;color:#6b7280;margin-bottom:6px;">
+          Verde = feito (manual) • Laranja = em breve (até 14 dias) • Vermelho = atrasado • Branco = neutro.
+        </p>
+        <div style="overflow-x:auto;">
+          <table class="tabela-visao-geral">
+            <thead>
+              <tr>
+                <th>Turma</th>`;
+
+      processosDef.forEach(p => { html += `<th>${escapeHTML(p.titulo)}</th>`; });
+      html += `</tr></thead><tbody>`;
+
+      turmas.forEach(turma => {
+        html += `<tr><td class="col-turma">${escapeHTML(turma.nome)}</td>`;
+        processosDef.forEach(p => {
+          const status = getStatusFinal(turma, p.id);
+          const valor  = turma[p.campoData] || "-";
+          html += `<td class="cel-processo status-${status}" data-turma="${escapeHTML(turma.id)}" data-proc="${escapeHTML(p.id)}">${escapeHTML(valor)}</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      conteudo.innerHTML = html;
+      inicializarEdicaoVisaoGeral(); // ✅ agora existe
     }
 
     // ===== filtros =====
@@ -1115,7 +1532,7 @@
       selectHorario.innerHTML = '<option value="todos">Horário: todos</option>';
       const horariosUnicos = Array.from(new Set(turmas.map(t => t.horario).filter(Boolean))).sort();
       horariosUnicos.forEach(h => {
-        const opt = document.createElement("option");""
+        const opt = document.createElement("option");
         opt.value = h;
         opt.textContent = h;
         selectHorario.appendChild(opt);
@@ -1144,7 +1561,7 @@
           <div>${criarBadgeStatus(turma.status)} ${criarBadgeNivel(turma.nivel)} ${criarBadgeSala(turma.sala)}</div>
           <div class="turma-nome">${escapeHTML(turma.nome)}</div>
           <div class="turma-meta">
-            Dia: ${escapeHTML(turma.dia)} • Horário: ${escapeHTML(turma.horario)}<br>
+            Dia: ${escapeHTML(turma.dia)} • Horário: ${escapeHTML(turma.horario)} às ${escapeHTML(turma.horarioFim || "-")}<br>
             Alunos: ${escapeHTML(turma.alunos ?? "-")}<br>
             Início: ${escapeHTML(turma.dataInicio || "-")} • Término: ${escapeHTML(turma.dataFim || "-")}<br>
             <button
@@ -1187,9 +1604,10 @@
     }
     window.selecionarTurma = selecionarTurma;
 
-    // ✅ IMPORTANTE: em module, crie a função e depois exponha
     function setModoPainel(modo) {
       modoPainel = modo;
+      const layoutEl = document.querySelector(".layout");
+      if (layoutEl) layoutEl.classList.toggle("modo-schedule", modo === "schedule");
 
       const tabTurma     = document.getElementById("tabTurma");
       const tabOverview  = document.getElementById("tabOverview");
@@ -1205,13 +1623,19 @@
 
       if (modo === "overview") {
         botoes.style.display = "none";
-        titulo.textContent = "Visão geral dos processos";
+        titulo.style.display = "none";       // ✅ some com o “resto” do modo turma
+        conteudo.innerHTML = "";             // ✅ limpa antes de renderizar
         renderVisaoGeral();
-      } else if (modo === "schedule") {
+      } 
+      else if (modo === "schedule") {
         botoes.style.display = "none";
-        titulo.textContent = "Quadro de horários";
+        titulo.style.display = "none";       // ✅ some com o “resto” do modo turma
+        conteudo.innerHTML = "";             // ✅ limpa antes de renderizar
         renderQuadroHorarios();
-      } else {
+      } 
+      else {
+        // modo "turma"
+        titulo.style.display = "block";      // ✅ volta
         if (turmaSelecionada) {
           titulo.textContent = `Turma selecionada: ${turmaSelecionada.nome}`;
           botoes.style.display = "flex";
@@ -1222,6 +1646,7 @@
           conteudo.innerHTML = "";
         }
       }
+
     }
     window.setModoPainel = setModoPainel;
 
@@ -1248,19 +1673,19 @@
 
 
           <div class="linha-info"><span class="campo-label">Nível</span><span class="campo-valor">${escapeHTML(turmaSelecionada.nivel)}</span></div>
-          <div class="linha-info"><span class="campo-label">Dia / horário</span><span class="campo-valor">${escapeHTML(turmaSelecionada.dia)} • ${escapeHTML(turmaSelecionada.horario)}</span></div>
+          <div class="linha-info"><span class="campo-label">Dia / horário</span><span class="campo-valor">${escapeHTML(turmaSelecionada.dia)} • ${escapeHTML(turmaSelecionada.horario)} às ${escapeHTML(turmaSelecionada.horarioFim || "-")}</span></div>
 
           ${linhaEditavelNumero({ label:"Alunos", campo:"alunos", valor: turmaSelecionada.alunos ?? "" })}
 
           ${linhaEditavelTexto({ label:"Data de início", campo:"dataInicio", valor: turmaSelecionada.dataInicio || "", placeholder:"dd/mm/aaaa" })}
           ${linhaEditavelTexto({ label:"Pausa", campo:"dataPausa", valor: turmaSelecionada.dataPausa || "", placeholder:"dd/mm/aaaa" })}
-          ${linhaEditavelTexto({ label:"Período de férias", campo:"periodoFerias", valor: turmaSelecionada.periodoFerias || "", placeholder:"ex: 10/12/2025 a 05/02/2026" })}
+          ${linhaEditavelTexto({ label:"Período de férias", campo:"periodoFerias", valor: turmaSelecionada.periodoFerias || "", placeholder:"ex: Dezembro" })}
           ${linhaEditavelTexto({ label:"Retorno", campo:"dataRetorno", valor: turmaSelecionada.dataRetorno || "", placeholder:"dd/mm/aaaa" })}
           ${linhaEditavelTexto({ label:"Término", campo:"dataFim", valor: turmaSelecionada.dataFim || "", placeholder:"dd/mm/aaaa" })}
 
           ${linhaEditavelNumero({ label:"Total de aulas", campo:"totalAulas", valor: turmaSelecionada.totalAulas ?? "" })}
 
-          ${linhaEditavelTexto({ label:"Próximo módulo", campo:"proximoModulo", valor: turmaSelecionada.proximoModulo || "", placeholder:"ex: GameMaker 2" })}
+          ${linhaEditavelTexto({ label:"Próximo módulo", campo:"proximoModulo", valor: turmaSelecionada.proximoModulo || "", placeholder:"ex: Teens 2" })}
         `;
       } else if (tipo === "processos") {
         conteudo.innerHTML = `
@@ -1284,279 +1709,6 @@
       }
     };
 
-    function criarCardProcesso(idProc, titulo, subtitulo) {
-      return `
-        <div class="processo-card status-neutro" data-status="neutro"
-             data-key="${escapeHTML(turmaSelecionada.id)}::${escapeHTML(idProc)}">
-          <div class="processo-titulo">${escapeHTML(titulo)}</div>
-          <div class="processo-sub">${escapeHTML(subtitulo || "-")}</div>
-          <div class="processo-status-label">Status: Neutro</div>
-        </div>`;
-    }
-
-    function aplicarEstadoNoCard(card, estado) {
-      if (!cicloStatusProcesso.includes(estado)) estado = "neutro";
-      card.dataset.status = estado;
-      cicloStatusProcesso.forEach(s => card.classList.remove("status-" + s));
-      card.classList.add("status-" + estado);
-
-      const label = card.querySelector(".processo-status-label");
-      if (label) label.textContent = "Status: " + statusLabelMap[estado];
-    }
-
-    function inicializarProcessosClicaveis() {
-      const cards = document.querySelectorAll(".processo-card");
-
-      cards.forEach(card => {
-        const [turmaId, procId] = card.dataset.key.split("::");
-        const turmaObj = turmas.find(t => t.id === turmaId);
-        if (!turmaObj) return;
-
-        const estadoInicial = getStatusFinal(turmaObj, procId);
-        aplicarEstadoNoCard(card, estadoInicial);
-
-        const caminhoRef = ref(db, `processos/${turmaId}/${procId}`);
-
-        // clique no card: muda status
-        card.addEventListener("click", () => {
-          let atual = card.dataset.status || "neutro";
-          let i = cicloStatusProcesso.indexOf(atual);
-          let proximo = cicloStatusProcesso[(i + 1) % cicloStatusProcesso.length];
-
-          aplicarEstadoNoCard(card, proximo);
-          set(caminhoRef, { status: proximo, manual: true });
-        });
-
-        // clique na data: editar data do processo (normaliza p/ dd/mm/aaaa)
-        const subEl = card.querySelector(".processo-sub");
-        if (subEl) {
-          subEl.style.textDecoration = "underline";
-          subEl.style.cursor = "pointer";
-          subEl.title = "Clique para editar a data";
-
-          subEl.addEventListener("click", (ev) => {
-            ev.stopPropagation();
-
-            const def = processosDef.find(p => p.id === procId);
-            if (!def) return;
-            const campo = def.campoData;
-
-            const valorAtual = turmaObj[campo] || "";
-            const novoValor = prompt("Digite a data (dd/mm/aaaa ou yyyy-mm-dd) ou deixe vazio:", valorAtual);
-            if (novoValor === null) return;
-
-            const novoRaw = novoValor.trim();
-            let novo = "";
-
-            if (novoRaw !== "") {
-              const d = parseDateBRorISO(novoRaw);
-              if (!d) { alert("Data inválida."); return; }
-              novo = isoToBR(dateToISO(d));
-            }
-
-            const turmaCampoRef = ref(db, `turmas/${turmaId}/${campo}`);
-            set(turmaCampoRef, novo)
-              .then(() => {
-                turmaObj[campo] = novo;
-                subEl.textContent = novo || "-";
-
-                // se o override era manual e NÃO era "feito", remove (volta automático)
-                const reg = statusProcessosFirebase?.[turmaId]?.[procId];
-                if (reg?.manual && reg.status !== "feito") {
-                  const overrideRef = ref(db, `processos/${turmaId}/${procId}`);
-                  remove(overrideRef).catch(() => {});
-                }
-
-                const novoStatus = getStatusFinal(turmaObj, procId);
-                aplicarEstadoNoCard(card, novoStatus);
-              })
-              .catch(err => {
-                console.error("Erro ao atualizar data do processo:", err);
-                alert("Erro ao salvar a data. Veja o console.");
-              });
-          });
-        }
-      });
-    }
-
-    function renderVisaoGeral() {
-      const conteudo = document.getElementById("conteudoTurma");
-      let html = `
-        <h3>📋 Visão geral dos processos</h3>
-        <p style="font-size:0.8rem;color:#6b7280;margin-bottom:6px;">
-          Verde = feito (manual) • Laranja = em breve (até 14 dias) • Vermelho = atrasado • Branco = neutro.
-        </p>
-        <div style="overflow-x:auto;">
-          <table class="tabela-visao-geral">
-            <thead>
-              <tr>
-                <th>Turma</th>`;
-
-      processosDef.forEach(p => { html += `<th>${escapeHTML(p.titulo)}</th>`; });
-      html += `</tr></thead><tbody>`;
-
-      turmas.forEach(turma => {
-        html += `<tr><td class="col-turma">${escapeHTML(turma.nome)}</td>`;
-        processosDef.forEach(p => {
-          const status = getStatusFinal(turma, p.id);
-          const valor  = turma[p.campoData] || "-";
-          // ✅ FIX: adiciona datasets pra edição funcionar
-          html += `<td class="cel-processo status-${status}" data-turma="${escapeHTML(turma.id)}" data-proc="${escapeHTML(p.id)}">${escapeHTML(valor)}</td>`;
-        });
-        html += `</tr>`;
-      });
-
-      html += `</tbody></table></div>`;
-      conteudo.innerHTML = html;
-      inicializarEdicaoVisaoGeral();
-    }
-
-    function inicializarEdicaoVisaoGeral() {
-      const celulas = document.querySelectorAll(".cel-processo");
-
-      celulas.forEach(td => {
-        td.addEventListener("dblclick", async (ev) => {
-          ev.stopPropagation();
-
-          const turmaId = td.dataset.turma;
-          const procId  = td.dataset.proc;
-          if (!turmaId || !procId) return;
-
-          const turmaObj = turmas.find(t => t.id === turmaId);
-          if (!turmaObj) return;
-
-          const def = processosDef.find(p => p.id === procId);
-          if (!def) return;
-
-          const campo = def.campoData;
-          const valorAtual = turmaObj[campo] || "";
-
-          const novoValor = prompt("Digite a nova data (dd/mm/aaaa ou yyyy-mm-dd) ou deixe vazio:", valorAtual);
-          if (novoValor === null) return;
-
-          const novoRaw = novoValor.trim();
-          let novo = "";
-          if (novoRaw !== "") {
-            const d = parseDateBRorISO(novoRaw);
-            if (!d) { alert("Data inválida."); return; }
-            novo = isoToBR(dateToISO(d));
-          }
-
-          try {
-            const campoRef = ref(db, `turmas/${turmaId}/${campo}`);
-            await set(campoRef, novo);
-
-            turmaObj[campo] = novo;
-
-            // remove override manual se não for "feito"
-            const reg = statusProcessosFirebase?.[turmaId]?.[procId];
-            if (reg?.manual && reg.status !== "feito") {
-              const overrideRef = ref(db, `processos/${turmaId}/${procId}`);
-              await remove(overrideRef).catch(() => {});
-            }
-
-            const novoStatus = getStatusFinal(turmaObj, procId);
-
-            td.textContent = novo || "-";
-            cicloStatusProcesso.forEach(s => td.classList.remove("status-" + s));
-            td.classList.add("status-" + novoStatus);
-
-          } catch (err) {
-            console.error("Erro ao atualizar data:", err);
-            alert("Erro ao salvar a data. Veja o console.");
-          }
-        });
-      });
-    }
-
-    function renderQuadroHorarios() {
-      const conteudo = document.getElementById("conteudoTurma");
-      const diasOrdem = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-
-      const turmasAtivas = turmas.filter(t => {
-        if (t.status === "Em andamento") return true;
-        if (mostrarFormacaoNoHorario && t.status === "Em formação") return true;
-        return false;
-      });
-
-      const minutosUnicos = Array.from(new Set(
-        turmasAtivas
-          .map(t => extrairMinutosHorario(t.horario))
-          .filter(v => v !== null)
-      )).sort((a, b) => a - b);
-
-      const legenda = `
-        <span class="badge badge-status-andamento">Em andamento</span>
-        <span class="badge badge-status-formacao">Em formação</span>
-      `;
-
-      let html = `
-        <h3>🗓️ Quadro de horários</h3>
-
-        <div class="schedule-controls">
-          <div class="left">
-            <label class="chk">
-              <input type="checkbox" ${mostrarFormacaoNoHorario ? "checked" : ""} onchange="toggleFormacaoHorario(this.checked)">
-              Mostrar turmas <strong>Em formação</strong>
-            </label>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            ${legenda}
-            <span style="font-size:0.78rem; color:#6b7280;">
-              (clique numa turma para abrir no painel)
-            </span>
-          </div>
-        </div>
-      `;
-
-      if (minutosUnicos.length === 0) {
-        html += `<div style="color:#6b7280; font-size:0.9rem;">Nenhuma turma “Em andamento” (ou “Em formação”, se marcado) com horário válido.</div>`;
-        conteudo.innerHTML = html;
-        return;
-      }
-
-      html += `<div class="schedule-wrap"><table class="schedule-table"><thead><tr>
-        <th class="col-hora">Horário</th>`;
-
-      diasOrdem.forEach(d => { html += `<th>${escapeHTML(d)}</th>`; });
-      html += `</tr></thead><tbody>`;
-
-      minutosUnicos.forEach(min => {
-        const horaLabel = formatarHora(min);
-        html += `<tr><td class="col-hora">${escapeHTML(horaLabel)}</td>`;
-
-        diasOrdem.forEach(dia => {
-          const lista = turmasAtivas.filter(t => {
-            if (t.dia !== dia) return false;
-            const tm = extrairMinutosHorario(t.horario);
-            return tm === min;
-          });
-
-          if (lista.length === 0) {
-            html += `<td><div class="slot-cell" style="color:#9ca3af;">—</div></td>`;
-          } else {
-            html += `<td><div class="slot-cell">`;
-            lista.forEach(t => {
-              const classeStatus = (t.status === "Em andamento") ? "slot-andamento" : "slot-formacao";
-              html += `
-                <div class="slot-card ${classeStatus}" onclick="abrirTurmaDoHorario('${escapeHTML(t.id)}')">
-                  <div>${criarBadgeStatus(t.status)} ${criarBadgeNivel(t.nivel)} ${criarBadgeSala(t.sala)}</div>
-                  <div class="slot-title">${escapeHTML(t.nome)}</div>
-                  <div class="slot-sub">${escapeHTML(t.dia)} • ${escapeHTML(t.horario)} • Alunos: ${escapeHTML(t.alunos ?? "-")}</div>
-                </div>
-              `;
-            });
-            html += `</div></td>`;
-          }
-        });
-
-        html += `</tr>`;
-      });
-
-      html += `</tbody></table></div>`;
-      conteudo.innerHTML = html;
-    }
-
     window.toggleFormacaoHorario = function(checked) {
       mostrarFormacaoNoHorario = !!checked;
       if (modoPainel === "schedule") renderQuadroHorarios();
@@ -1566,6 +1718,31 @@
       window.setModoPainel("turma");
       selecionarTurma(id);
     };
+
+    // ===== Leitura do Firebase =====
+    const turmasRef = ref(db, "turmas");
+    const processosRootRef = ref(db, "processos");
+
+    onValue(turmasRef, (snap) => {
+      const data = snap.val() || {};
+      turmas = Object.entries(data).map(([id, dados]) => ({ id, ...dados }));
+
+      if (turmaSelecionada) {
+        const encontrada = turmas.find(t => t.id === turmaSelecionada.id);
+        turmaSelecionada = encontrada || null;
+      }
+
+      preencherOpcoesHorario();
+      renderListaTurmas();
+
+      if (modoPainel === "overview") renderVisaoGeral();
+      if (modoPainel === "schedule") renderQuadroHorarios();
+    });
+
+    onValue(processosRootRef, (snap) => {
+      statusProcessosFirebase = snap.val() || {};
+      if (modoPainel === "overview") renderVisaoGeral();
+    });
 
     // ===== Inicializa =====
     window.setModoPainel("turma");
@@ -1616,7 +1793,6 @@
             <option value="Sábado">Sábado</option>
           </select>
         </label>
-
         <label>
           Sala
           <select id="novaTurmaSala"
@@ -1626,11 +1802,21 @@
           </select>
         </label>
 
+
         <label>
           Horário (início)
           <input id="novaTurmaHorario" type="text"
                  placeholder="Ex: 18:30"
                  style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+        </label>
+
+        <label>
+          Duração da aula
+          <select id="novaTurmaDuracao"
+                  style="width:100%; padding:4px 6px; border-radius:6px; border:1px solid #d1d5db;">
+            <option value="90">1h30</option>
+            <option value="120">2h</option>
+          </select>
         </label>
 
         <label>
